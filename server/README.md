@@ -35,3 +35,5 @@ This prototype implements two user stories:
 - POST /api/auth/login
 - POST /api/auth/forgot
 - POST /api/auth/reset
+
+Commit checking.
