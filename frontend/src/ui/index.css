@@ -1,0 +1,21 @@
+@import 'tailwindcss';
+@plugin 'tailwindcss-react-aria-components';
+@plugin 'tailwindcss-animate';
+@plugin "@tailwindcss/typography";
+
+/* Scale up hit targets on high resolution mobile devices. */
+@media (min-resolution: 200dpi) {
+  html {
+    font-size: 18px;
+  }
+
+  .text-sm {
+    /* ensure minimum font size of 16px */
+    font-size: 0.9rem;
+  }
+}
+
+body {
+  @apply bg-fuchsia-50 dark:bg-stone-900 text-stone-950 dark:text-fuchsia-50;
+  color-scheme: dark light;
+}
