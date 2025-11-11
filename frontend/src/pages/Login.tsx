@@ -17,8 +17,8 @@ function PasswordLogin({ onLogin, onForgot, onBack }) {
   return (
     <>
       <Form onSubmit={handleSubmit}>
-        <TextField label="linkblue ID" value={linkBlueId} onChange={setLinkBlueId} />
-        <TextField label="Password" type="password" value={password} onChange={setPassword} />
+        <TextField name="linkblue" label="linkblue ID" value={linkBlueId} onChange={setLinkBlueId} isRequired />
+        <TextField name="password" label="Password" type="password" value={password} onChange={setPassword} isRequired />
         <Button type="submit">Log In</Button>
         <Button variant="secondary" onPress={onForgot}>Forgot password?</Button>
         <Button variant="secondary" onPress={onBack}>Try another way</Button>
