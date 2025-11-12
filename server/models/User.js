@@ -6,9 +6,13 @@ const userSchema = new mongoose.Schema(
     email: { type: String, required: true, trim: true, unique: true, lowercase: true },
     passwordHash: { type: String, required: true },
 
-    // Password recovery fields
+    // Token-based reset (kept in case you want both)
     resetPasswordToken: { type: String, default: null },
-    resetPasswordExpiresAt: { type: Date, default: null }
+    resetPasswordExpiresAt: { type: Date, default: null },
+
+    // NEW: Code (OTP) based reset
+    resetCodeHash: { type: String, default: null },
+    resetCodeExpiresAt: { type: Date, default: null }
   },
   { timestamps: true }
 );

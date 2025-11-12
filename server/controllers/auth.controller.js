@@ -2,10 +2,11 @@ import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import { customAlphabet } from 'nanoid';
 import { User } from '../models/User.js';
+import { sendEmail } from '../utils/mailer.js';
 
 const nanoid = customAlphabet('0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz', 32);
 
-// ---------- org allow-list helpers ----------
+// ---------- org allow-list helpers (keep if you added restriction) ----------
 function getAllowedDomains() {
   const raw = (process.env.ALLOWED_EMAIL_DOMAINS || '').trim();
   return raw
@@ -17,10 +18,10 @@ function emailDomain(email) {
 }
 function isAllowedEmail(email) {
   const domains = getAllowedDomains();
-  if (domains.length === 0) return true; // no restriction configured
+  if (domains.length === 0) return true;
   return domains.includes(emailDomain(email));
 }
-// -------------------------------------------
+// ---------------------------------------------------------------------------
 
 function sign(user) {
   return jwt.sign({ id: user._id, email: user.email }, process.env.JWT_SECRET, {
@@ -35,7 +36,6 @@ export async function register(req, res, next) {
       return res.status(400).json({ ok: false, error: 'name, email, password required' });
     }
 
-    // ✅ Enforce org allow-list at registration time
     if (!isAllowedEmail(email)) {
       return res.status(403).json({
         ok: false,
@@ -65,7 +65,6 @@ export async function login(req, res, next) {
       return res.status(400).json({ ok: false, error: 'email and password required' });
     }
 
-    // Optional: also block login for non-allowed domains
     if (!isAllowedEmail(email)) {
       return res.status(403).json({
         ok: false,
@@ -86,12 +85,16 @@ export async function login(req, res, next) {
   }
 }
 
+/**
+ * Request a password reset via 6-digit code (OTP).
+ * - Generates code, hashes it, sets expiry.
+ * - Sends code by email (and logs it for dev).
+ */
 export async function requestPasswordReset(req, res, next) {
   try {
     const { email } = req.body || {};
     if (!email) return res.status(400).json({ ok: false, error: 'email required' });
 
-    // Optional: enforce domain on recovery entry point too
     if (!isAllowedEmail(email)) {
       return res.status(403).json({
         ok: false,
@@ -100,47 +103,67 @@ export async function requestPasswordReset(req, res, next) {
     }
 
     const user = await User.findOne({ email: String(email).toLowerCase() });
-    // Do not reveal existence
+    // respond success regardless to avoid enumeration
     if (!user) {
-      return res.json({ ok: true, message: 'If that email exists, a reset token was created.' });
+      return res.json({ ok: true, message: 'If that email exists, a reset code was sent.' });
     }
 
     const ttlMin = parseInt(process.env.RESET_TOKEN_TTL_MIN || '30', 10);
-    const token = nanoid();
-    const expiresAt = new Date(Date.now() + ttlMin * 60 * 1000);
+    const code = String(Math.floor(100000 + Math.random() * 900000)); // 6-digit
+    const codeHash = await bcrypt.hash(code, 10);
 
-    user.resetPasswordToken = token;
-    user.resetPasswordExpiresAt = expiresAt;
+    user.resetCodeHash = codeHash;
+    user.resetCodeExpiresAt = new Date(Date.now() + ttlMin * 60 * 1000);
+    // still keep token fields null if you want to separate mechanisms
+    user.resetPasswordToken = null;
+    user.resetPasswordExpiresAt = null;
     await user.save();
 
-    console.log('🔐 Password reset token for', user.email, ':', token, '(expires at', expiresAt.toISOString(), ')');
+    // send email (and also log for dev)
+    const subject = 'Your Campus Connect reset code';
+    const text = `Your password reset code is ${code}. It expires in ${ttlMin} minutes.`;
+    const html = `<p>Your password reset code is <b>${code}</b>.</p><p>It expires in ${ttlMin} minutes.</p>`;
+    try {
+      await sendEmail({ to: user.email, subject, text, html });
+    } catch (e) {
+      console.warn('⚠️ Email send failed; code logged below (dev mode).', e.message);
+    }
+    console.log('🔐 Password reset code for', user.email, ':', code, '(expires in', ttlMin, 'min)');
 
     res.json({
       ok: true,
-      message: `Reset token created. Valid for ${ttlMin} minutes.`,
-      data: { token } // prototype: returned for testing
+      message: `If that email exists, a reset code was sent.`
     });
   } catch (err) {
     next(err);
   }
 }
 
-export async function resetPassword(req, res, next) {
+/**
+ * Reset password using { email, code, newPassword }.
+ */
+export async function resetPasswordWithCode(req, res, next) {
   try {
-    const { token, newPassword } = req.body || {};
-    if (!token || !newPassword) {
-      return res.status(400).json({ ok: false, error: 'token and newPassword required' });
+    const { email, code, newPassword } = req.body || {};
+    if (!email || !code || !newPassword) {
+      return res.status(400).json({ ok: false, error: 'email, code, newPassword required' });
     }
 
-    const user = await User.findOne({ resetPasswordToken: token });
-    if (!user) return res.status(400).json({ ok: false, error: 'Invalid token' });
-    if (!user.resetPasswordExpiresAt || user.resetPasswordExpiresAt < new Date()) {
-      return res.status(400).json({ ok: false, error: 'Token expired' });
+    const user = await User.findOne({ email: String(email).toLowerCase() });
+    if (!user || !user.resetCodeHash) {
+      return res.status(400).json({ ok: false, error: 'Invalid or expired code' });
     }
+
+    if (!user.resetCodeExpiresAt || user.resetCodeExpiresAt < new Date()) {
+      return res.status(400).json({ ok: false, error: 'Code expired' });
+    }
+
+    const ok = await bcrypt.compare(String(code), user.resetCodeHash);
+    if (!ok) return res.status(400).json({ ok: false, error: 'Invalid code' });
 
     user.passwordHash = await bcrypt.hash(newPassword, 10);
-    user.resetPasswordToken = null;
-    user.resetPasswordExpiresAt = null;
+    user.resetCodeHash = null;
+    user.resetCodeExpiresAt = null;
     await user.save();
 
     res.json({ ok: true, message: 'Password updated. You can now log in with your new password.' });
