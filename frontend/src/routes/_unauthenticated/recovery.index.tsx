@@ -1,6 +1,8 @@
 import { createFileRoute } from '@tanstack/react-router'
 import { FormEvent, useState } from 'react'
+import { isKnownError, useForgot } from '~/api/hooks'
 import { Button } from '~/ui/Button'
+import { ErrorBox } from '~/ui/ErrorBox'
 import { Form } from '~/ui/Form'
 import { TextField } from '~/ui/TextField'
 
@@ -11,7 +13,8 @@ export const Route = createFileRoute('/_unauthenticated/recovery/')({
 function RouteComponent() {
   const navigate = Route.useNavigate()
   const search = Route.useSearch()
-  const { auth } = Route.useRouteContext()
+
+  const forgot = useForgot()
 
   const [email, setEmail] = useState("")
 
@@ -21,8 +24,9 @@ function RouteComponent() {
       return
     }
 
-    auth.sendResetEmail(email)
-    navigate({ to: '/recovery/code', search: { redirect: search.redirect, email }})
+    forgot.mutateAsync({ email }).then(() => {
+      navigate({ to: '/recovery/code', search: { redirect: search.redirect, email }})
+    })
   }
 
   return (
@@ -33,6 +37,7 @@ function RouteComponent() {
         <TextField type="email" label="Email" value={email} onChange={setEmail} isRequired />
         <Button type="submit">Send Reset Link</Button>
         <Button variant="secondary" onPress={() => navigate({ to: '/login', search })}>Back to Login</Button>
+        {isKnownError(forgot.error) && <ErrorBox>{forgot.error.error}</ErrorBox>}
       </Form>
     </>
   )
