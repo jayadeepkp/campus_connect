@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as UnauthenticatedRouteImport } from './routes/_unauthenticated'
 import { Route as AuthenticatedRouteImport } from './routes/_authenticated'
 import { Route as AuthenticatedIndexRouteImport } from './routes/_authenticated/index'
+import { Route as UnauthenticatedRegisterRouteImport } from './routes/_unauthenticated/register'
 import { Route as UnauthenticatedRecoveryRouteRouteImport } from './routes/_unauthenticated/recovery.route'
 import { Route as UnauthenticatedLoginRouteRouteImport } from './routes/_unauthenticated/login.route'
 import { Route as UnauthenticatedRecoveryIndexRouteImport } from './routes/_unauthenticated/recovery.index'
@@ -31,6 +32,11 @@ const AuthenticatedIndexRoute = AuthenticatedIndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => AuthenticatedRoute,
+} as any)
+const UnauthenticatedRegisterRoute = UnauthenticatedRegisterRouteImport.update({
+  id: '/register',
+  path: '/register',
+  getParentRoute: () => UnauthenticatedRoute,
 } as any)
 const UnauthenticatedRecoveryRouteRoute =
   UnauthenticatedRecoveryRouteRouteImport.update({
@@ -72,6 +78,7 @@ const UnauthenticatedLoginEmailRoute =
 export interface FileRoutesByFullPath {
   '/login': typeof UnauthenticatedLoginRouteRouteWithChildren
   '/recovery': typeof UnauthenticatedRecoveryRouteRouteWithChildren
+  '/register': typeof UnauthenticatedRegisterRoute
   '/': typeof AuthenticatedIndexRoute
   '/login/email': typeof UnauthenticatedLoginEmailRoute
   '/recovery/code': typeof UnauthenticatedRecoveryCodeRoute
@@ -79,6 +86,7 @@ export interface FileRoutesByFullPath {
   '/recovery/': typeof UnauthenticatedRecoveryIndexRoute
 }
 export interface FileRoutesByTo {
+  '/register': typeof UnauthenticatedRegisterRoute
   '/': typeof AuthenticatedIndexRoute
   '/login/email': typeof UnauthenticatedLoginEmailRoute
   '/recovery/code': typeof UnauthenticatedRecoveryCodeRoute
@@ -91,6 +99,7 @@ export interface FileRoutesById {
   '/_unauthenticated': typeof UnauthenticatedRouteWithChildren
   '/_unauthenticated/login': typeof UnauthenticatedLoginRouteRouteWithChildren
   '/_unauthenticated/recovery': typeof UnauthenticatedRecoveryRouteRouteWithChildren
+  '/_unauthenticated/register': typeof UnauthenticatedRegisterRoute
   '/_authenticated/': typeof AuthenticatedIndexRoute
   '/_unauthenticated/login/email': typeof UnauthenticatedLoginEmailRoute
   '/_unauthenticated/recovery/code': typeof UnauthenticatedRecoveryCodeRoute
@@ -102,19 +111,27 @@ export interface FileRouteTypes {
   fullPaths:
     | '/login'
     | '/recovery'
+    | '/register'
     | '/'
     | '/login/email'
     | '/recovery/code'
     | '/login/'
     | '/recovery/'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/login/email' | '/recovery/code' | '/login' | '/recovery'
+  to:
+    | '/register'
+    | '/'
+    | '/login/email'
+    | '/recovery/code'
+    | '/login'
+    | '/recovery'
   id:
     | '__root__'
     | '/_authenticated'
     | '/_unauthenticated'
     | '/_unauthenticated/login'
     | '/_unauthenticated/recovery'
+    | '/_unauthenticated/register'
     | '/_authenticated/'
     | '/_unauthenticated/login/email'
     | '/_unauthenticated/recovery/code'
@@ -149,6 +166,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/'
       preLoaderRoute: typeof AuthenticatedIndexRouteImport
       parentRoute: typeof AuthenticatedRoute
+    }
+    '/_unauthenticated/register': {
+      id: '/_unauthenticated/register'
+      path: '/register'
+      fullPath: '/register'
+      preLoaderRoute: typeof UnauthenticatedRegisterRouteImport
+      parentRoute: typeof UnauthenticatedRoute
     }
     '/_unauthenticated/recovery': {
       id: '/_unauthenticated/recovery'
@@ -242,12 +266,14 @@ const UnauthenticatedRecoveryRouteRouteWithChildren =
 interface UnauthenticatedRouteChildren {
   UnauthenticatedLoginRouteRoute: typeof UnauthenticatedLoginRouteRouteWithChildren
   UnauthenticatedRecoveryRouteRoute: typeof UnauthenticatedRecoveryRouteRouteWithChildren
+  UnauthenticatedRegisterRoute: typeof UnauthenticatedRegisterRoute
 }
 
 const UnauthenticatedRouteChildren: UnauthenticatedRouteChildren = {
   UnauthenticatedLoginRouteRoute: UnauthenticatedLoginRouteRouteWithChildren,
   UnauthenticatedRecoveryRouteRoute:
     UnauthenticatedRecoveryRouteRouteWithChildren,
+  UnauthenticatedRegisterRoute: UnauthenticatedRegisterRoute,
 }
 
 const UnauthenticatedRouteWithChildren = UnauthenticatedRoute._addFileChildren(

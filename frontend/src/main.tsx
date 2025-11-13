@@ -1,9 +1,11 @@
-import { StrictMode, useRef, useState } from "react"
+import { StrictMode, useRef } from "react"
 import ReactDOM from "react-dom/client"
 import './ui/index.css'
 import { createRouter, RouterProvider } from "@tanstack/react-router"
 import { routeTree } from './routeTree.gen'
 import { Context } from "./routes/__root"
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query"
+import { initialUser } from "./api/hooks"
 
 const router = createRouter({
   routeTree,
@@ -21,30 +23,20 @@ declare module '@tanstack/react-router' {
   }
 }
 
+const queryClient = new QueryClient()
+
 function App() {
   const context = useRef<Context>({
     auth: {
-      user: null,
-      async loginEmail(email) {
-        alert('pretend we have email implemented')
-        this.user = email
-        router.invalidate()
-      },
-      async loginLinkblue() {
-        alert('pretend we have oauth implemented')
-        this.user = 'link@uky.edu'
-        router.invalidate()
-      },
-      sendResetEmail(_user) {
-        alert('pretend i sent a reset email')
-      },
-      async resetPassword(user, _code, _password) {
-        alert('pretend the password was reset')
+      user: initialUser(),
+      loggedIn(user) {
         this.user = user
+        localStorage.setItem('auth', JSON.stringify(user))
         router.invalidate()
       },
-      logout() {
+      loggedOut() {
         this.user = null
+        localStorage.removeItem('auth')
         router.invalidate()
       },
     }
@@ -57,4 +49,8 @@ function App() {
   )  
 }
 
-ReactDOM.createRoot(document.getElementById("root")!).render(<App />);
+ReactDOM.createRoot(document.getElementById("root")!).render(
+  <QueryClientProvider client={queryClient}>
+    <App />
+  </QueryClientProvider>
+);

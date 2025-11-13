@@ -33,11 +33,13 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@tanstack/react-query": "^5.90.8",
     "@tanstack/react-router": "^1.135.2",
     "lucide-react": "^0.517.0",
     "postcss": "^8.4.31",
     "react-aria-components": "latest",
-    "tailwind-variants": "^0.3.1"
+    "tailwind-variants": "^0.3.1",
+    "valibot": "^1.1.0"
   },
   "resolutions": {
     "@types/mime": "3.0.4",

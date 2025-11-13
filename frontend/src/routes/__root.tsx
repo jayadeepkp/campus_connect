@@ -1,15 +1,5 @@
 import { createRootRouteWithContext, Outlet } from "@tanstack/react-router";
-
-export type AuthContext = {
-  user: string | null
-
-  loginEmail(email: string): void
-  loginLinkblue(): void
-  logout(): void
-
-  sendResetEmail(user: string): void
-  resetPassword(user: string, code: string, password: string): void
-}
+import { AuthContext, User } from "~/api/hooks";
 
 export type Context = {
   auth: AuthContext

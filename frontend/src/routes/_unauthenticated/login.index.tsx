@@ -16,8 +16,8 @@ function RouteComponent() {
       <p>Choose the best login method for you</p>
 
       <div className="flex flex-col space-y-4 pt-2">
-        <Button variant="secondary" onPress={() => auth.loginLinkblue()}>linkblue</Button>
-        <Button variant="secondary" onPress={() => navigate({ to: '/login/email', search })}>Campus Email and Password</Button>
+        <Button variant="secondary" onPress={() => navigate({ to: '/register', search })}>Register New Account</Button>
+        <Button variant="secondary" onPress={() => navigate({ to: '/login/email', search })}>Log Into Existing Account</Button>
       </div>
     </>
   );

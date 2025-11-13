@@ -1,0 +1,21 @@
+services:
+  mongo:
+    image: mongo
+    restart: always
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: root
+      MONGO_INITDB_ROOT_PASSWORD: example
+  server:
+    build:
+      context: server
+      dockerfile: Dockerfile
+    ports:
+    - 5050:5050
+    depends_on:
+    - mongo
+    environment:
+      MONGO_URI: mongodb://root:example@mongo:27017/
+      JWT_SECRET: change-me
+      JWT_EXPIRES: 7d
+      RESET_TOKEN_TTL_MIN: 30
+      PORT: 5050

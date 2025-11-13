@@ -2304,6 +2304,18 @@
   resolved "https://registry.yarnpkg.com/@tanstack/history/-/history-1.133.28.tgz#488a4050b48333b7d983b22cd4712bd234a5e46c"
   integrity sha512-B7+x7eP2FFvi3fgd3rNH9o/Eixt+pp0zCIdGhnQbAJjFrlwIKGjGnwyJjhWJ5fMQlGks/E2LdDTqEV4W9Plx7g==
 
+"@tanstack/query-core@5.90.8":
+  version "5.90.8"
+  resolved "https://registry.yarnpkg.com/@tanstack/query-core/-/query-core-5.90.8.tgz#4a2600a5acf403494e4d5a3fcfac038ed84c5db7"
+  integrity sha512-4E0RP/0GJCxSNiRF2kAqE/LQkTJVlL/QNU7gIJSptaseV9HP6kOuA+N11y4bZKZxa3QopK3ZuewwutHx6DqDXQ==
+
+"@tanstack/react-query@^5.90.8":
+  version "5.90.8"
+  resolved "https://registry.yarnpkg.com/@tanstack/react-query/-/react-query-5.90.8.tgz#c9b8bdbffd2df4b023094c3da144324a9daa5cef"
+  integrity sha512-/3b9QGzkf4rE5/miL6tyhldQRlLXzMHcySOm/2Tm2OLEFE9P1ImkH0+OviDBSvyAvtAOJocar5xhd7vxdLi3aQ==
+  dependencies:
+    "@tanstack/query-core" "5.90.8"
+
 "@tanstack/react-router@^1.135.2":
   version "1.135.2"
   resolved "https://registry.yarnpkg.com/@tanstack/react-router/-/react-router-1.135.2.tgz#037ab0cfa267cb1d629dd75594bb6fcd4cd7f637"
@@ -4209,6 +4221,11 @@ util@^0.12.5:
     is-generator-function "^1.0.7"
     is-typed-array "^1.1.3"
     which-typed-array "^1.1.2"
+
+valibot@^1.1.0:
+  version "1.1.0"
+  resolved "https://registry.yarnpkg.com/valibot/-/valibot-1.1.0.tgz#873bb1af9e1577391690307bfe0520bd1360ec2d"
+  integrity sha512-Nk8lX30Qhu+9txPYTwM0cFlWLdPFsFr6LblzqIySfbZph9+BFsAHsNvHOymEviUepeIW6KFHzpX8TKhbptBXXw==
 
 vite@^5.0.10:
   version "5.4.21"

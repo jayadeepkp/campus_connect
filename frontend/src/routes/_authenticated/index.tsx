@@ -6,6 +6,7 @@ import { Button } from "~/ui/Button";
 
 
 import { createFileRoute } from '@tanstack/react-router'
+import { useLogout } from "~/api/hooks";
 
 export const Route = createFileRoute('/_authenticated/')({
   component: RouteComponent,
@@ -14,10 +15,11 @@ export const Route = createFileRoute('/_authenticated/')({
 function RouteComponent() {
   const [posts, setPosts] = useState(getMockPosts());
   const { auth } = Route.useRouteContext()
+  const logout = useLogout(auth)
 
   const handleAddPost = (text: string) => {
     setPosts([
-      { id: Date.now(), author: auth.user!, content: text, edited: false },
+      { id: Date.now(), author: auth.user!.user.name, content: text, edited: false },
       ...posts,
     ]);
   };
@@ -37,9 +39,9 @@ function RouteComponent() {
   return (
     <>
       <nav className="flex flex-row items-center justify-between bg-fuchsia-200 dark:bg-stone-800 p-2">
-        <span>Campus Connect, {auth.user}</span>
+        <span>Campus Connect, {auth.user!.user.name}</span>
 
-        <Button onPress={() => auth.logout()}>
+        <Button onPress={() => logout.mutate()}>
           Log Out
         </Button>
       </nav>
@@ -59,7 +61,7 @@ function RouteComponent() {
               <PostCard
                 key={p.id}
                 post={p}
-                canEdit={p.author === auth.user}
+                canEdit={p.author === auth.user!.user.name}
                 onDelete={() => handleDelete(p.id)}
                 onEdit={(newText: string) => handleEdit(p.id, newText)}
               />
