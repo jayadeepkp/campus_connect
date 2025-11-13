@@ -19,3 +19,4 @@ services:
       JWT_EXPIRES: 7d
       RESET_TOKEN_TTL_MIN: 30
       PORT: 5050
+      ALLOWED_EMAIL_DOMAINS: uky.edu
