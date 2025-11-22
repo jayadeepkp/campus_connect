@@ -22,7 +22,7 @@ function RouteComponent() {
   const [code, setCode] = useState("")
   const [password, setPassword] = useState("")
 
-  const resetWithCode = useResetWithCode()
+  const resetWithCode = useResetWithCode(auth)
   const login = useLogin(auth)
 
   const handleSubmit = (e: FormEvent<HTMLFormElement>) => {

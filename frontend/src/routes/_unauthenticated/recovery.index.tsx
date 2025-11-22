@@ -13,8 +13,9 @@ export const Route = createFileRoute('/_unauthenticated/recovery/')({
 function RouteComponent() {
   const navigate = Route.useNavigate()
   const search = Route.useSearch()
+  const { auth } = Route.useRouteContext()
 
-  const forgot = useForgot()
+  const forgot = useForgot(auth)
 
   const [email, setEmail] = useState("")
 
