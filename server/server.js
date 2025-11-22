@@ -9,6 +9,7 @@ import { errorHandler } from './middleware/error.js';
 import authRoutes from './routes/auth.routes.js';
 import postRoutes from './routes/post.routes.js'; 
 import notificationRoutes from "./routes/notification.routes.js";
+import userRoutes from './routes/user.routes.js';
 
 const app = express();
 
@@ -24,8 +25,9 @@ app.get('/', (req, res) => {
 
 // routes
 app.use('/api/auth', authRoutes);
-app.use('/api/posts', postRoutes);
 app.use("/api/notifications", notificationRoutes);               
+app.use('/api/posts', postRoutes);               
+app.use('/api/users', userRoutes);
 
 // error handler
 app.use(errorHandler);

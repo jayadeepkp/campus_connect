@@ -12,7 +12,9 @@ const userSchema = new mongoose.Schema(
 
     // NEW: Code (OTP) based reset
     resetCodeHash: { type: String, default: null },
-    resetCodeExpiresAt: { type: Date, default: null }
+    resetCodeExpiresAt: { type: Date, default: null },
+
+    blockedUsers: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }]
   },
   { timestamps: true }
 );
