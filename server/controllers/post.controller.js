@@ -1,29 +1,22 @@
 // server/controllers/post.controller.js
-import { Post } from "../models/Post.js";
-import { User } from "../models/User.js";
+import { Post } from '../models/Post.js';
+import { User } from '../models/User.js';
 
 /**
  * Create a new post
- * Body: { userId, content }
+ * POST /api/posts
+ * Body: { title, body }
+ * Auth: required (req.user from requireAuth)
  */
 export async function createPost(req, res, next) {
   try {
-    const { userId, title, body } = req.body || {};
+    const { title, body } = req.body || {};
+    const user = req.user; // came from auth middleware
 
-    // basic validation
-    if (!userId || !title || !body || !title.trim() || !body.trim()) {
-      return res.status(400).json({
-        ok: false,
-        error: "userId, title, and body are required",
-      });
-    }
-
-    // find the user so we can fill author, authorName, authorEmail
-    const user = await User.findById(userId);
-    if (!user) {
+    if (!title || !body || !title.trim() || !body.trim()) {
       return res
-        .status(404)
-        .json({ ok: false, error: "User not found for provided userId" });
+        .status(400)
+        .json({ ok: false, error: 'title and body are required' });
     }
 
     const post = await Post.create({
@@ -44,16 +37,16 @@ export async function createPost(req, res, next) {
 }
 
 /**
- * Get a single post by id
- * Params: :id
+ * Get a single post
+ * GET /api/posts/:id
  */
 export async function getPost(req, res, next) {
   try {
     const postId = req.params.id;
-    const post = await Post.findById(postId);
+    const post = await Post.findById(postId).lean();
 
     if (!post) {
-      return res.status(404).json({ ok: false, error: "Post not found" });
+      return res.status(404).json({ ok: false, error: 'Post not found' });
     }
 
     return res.json({ ok: true, data: post });
@@ -64,33 +57,33 @@ export async function getPost(req, res, next) {
 
 /**
  * Edit an existing post
- * Params: :id
- * Body: { userId, content }
+ * PUT /api/posts/:id
+ * Body: { title?, body? }
  */
 export async function editPost(req, res, next) {
   try {
-    const { userId, content } = req.body || {};
+    const { title, body } = req.body || {};
     const postId = req.params.id;
-
-    if (!userId || !content || !content.trim()) {
-      return res
-        .status(400)
-        .json({ ok: false, error: "userId and non-empty content are required" });
-    }
+    const userId = req.user._id;
 
     const post = await Post.findById(postId);
     if (!post) {
-      return res.status(404).json({ ok: false, error: "Post not found" });
+      return res.status(404).json({ ok: false, error: 'Post not found' });
     }
 
-    // NOTE: in a real app, use auth middleware & req.user._id instead of userId from body
-    if (String(post.poster) !== String(userId)) {
+    // Only the author can edit
+    if (String(post.author) !== String(userId)) {
       return res
         .status(403)
-        .json({ ok: false, error: "You may not edit this post" });
+        .json({ ok: false, error: 'You may not edit this post' });
     }
 
-    post.text = content;
+    if (title && title.trim()) {
+      post.title = title;
+    }
+    if (body && body.trim()) {
+      post.body = body;
+    }
     post.edited = true;
 
     await post.save();
@@ -102,30 +95,24 @@ export async function editPost(req, res, next) {
 }
 
 /**
- * Delete an existing post
- * Params: :id
- * Body: { userId }
+ * Delete a post
+ * DELETE /api/posts/:id
  */
 export async function deletePost(req, res, next) {
   try {
-    const { userId } = req.body || {};
     const postId = req.params.id;
-
-    if (!userId) {
-      return res
-        .status(400)
-        .json({ ok: false, error: "userId is required to delete a post" });
-    }
+    const userId = req.user._id;
 
     const post = await Post.findById(postId);
     if (!post) {
-      return res.status(404).json({ ok: false, error: "Post not found" });
+      return res.status(404).json({ ok: false, error: 'Post not found' });
     }
 
-    if (String(post.poster) !== String(userId)) {
+    // Only the author can delete
+    if (String(post.author) !== String(userId)) {
       return res
         .status(403)
-        .json({ ok: false, error: "You may not delete this post" });
+        .json({ ok: false, error: 'You may not delete this post' });
     }
 
     await post.remove();
@@ -138,39 +125,32 @@ export async function deletePost(req, res, next) {
 
 /**
  * Toggle like on a post
- * Params: :id
- * Body: { userId }
+ * POST /api/posts/:id/like
  */
 export async function toggleLike(req, res, next) {
   try {
-    const { userId } = req.body || {};
     const postId = req.params.id;
-
-    if (!userId) {
-      return res
-        .status(400)
-        .json({ ok: false, error: "userId is required to like a post" });
-    }
+    const userId = req.user._id;
 
     const post = await Post.findById(postId);
     if (!post) {
-      return res.status(404).json({ ok: false, error: "Post not found" });
+      return res.status(404).json({ ok: false, error: 'Post not found' });
     }
 
     if (!Array.isArray(post.likes)) {
       post.likes = [];
     }
 
-    const alreadyIndex = post.likes.findIndex(
+    const index = post.likes.findIndex(
       (id) => String(id) === String(userId)
     );
 
     let liked;
-    if (alreadyIndex === -1) {
+    if (index === -1) {
       post.likes.push(userId);
       liked = true;
     } else {
-      post.likes.splice(alreadyIndex, 1);
+      post.likes.splice(index, 1);
       liked = false;
     }
 
@@ -191,23 +171,24 @@ export async function toggleLike(req, res, next) {
 
 /**
  * Add a comment to a post
- * Params: :id
- * Body: { userId, text }
+ * POST /api/posts/:id/comment
+ * Body: { text }
  */
 export async function addComment(req, res, next) {
   try {
-    const { userId, text } = req.body || {};
     const postId = req.params.id;
+    const { text } = req.body || {};
+    const userId = req.user._id;
 
-    if (!userId || !text || !text.trim()) {
+    if (!text || !text.trim()) {
       return res
         .status(400)
-        .json({ ok: false, error: "userId and non-empty text are required" });
+        .json({ ok: false, error: 'Comment text required' });
     }
 
     const post = await Post.findById(postId);
     if (!post) {
-      return res.status(404).json({ ok: false, error: "Post not found" });
+      return res.status(404).json({ ok: false, error: 'Post not found' });
     }
 
     if (!Array.isArray(post.comments)) {
@@ -236,12 +217,12 @@ export async function addComment(req, res, next) {
 }
 
 /**
- * (Optional) Get trending posts – simple version
- * GET /api/posts/trending
+ * Get trending posts (simple version)
+ * GET /api/posts/trending/all
  */
 export async function getTrendingPosts(req, res, next) {
   try {
-    // simple approach: most recent first; you can later add sorting by likes/comments
+    // Simple: newest first. You can improve later using likes/comments.
     const posts = await Post.find({})
       .sort({ createdAt: -1 })
       .limit(20)
