@@ -61,7 +61,7 @@ export async function markAllNotificationsRead(req, res, next) {
       { $set: { read: true } }
     );
 
-    return res.json({ ok: true });
+    return res.json({ ok: true, data: 'ok' });
   } catch (err) {
     next(err);
   }

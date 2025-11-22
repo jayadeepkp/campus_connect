@@ -33,7 +33,7 @@ export const itemStyles = tv({
   variants: {
     isSelected: {
       false: 'text-slate-700 dark:text-zinc-300 hover:bg-slate-200 dark:hover:bg-zinc-700 -outline-offset-2',
-      true: 'bg-blue-600 text-white forced-colors:bg-[Highlight] forced-colors:text-[HighlightText] [&:has(+[data-selected])]:rounded-b-none [&+[data-selected]]:rounded-t-none -outline-offset-4 outline-white dark:outline-white forced-colors:outline-[HighlightText]'
+      true: 'bg-fuchsia-600 text-white forced-colors:bg-[Highlight] forced-colors:text-[HighlightText] [&:has(+[data-selected])]:rounded-b-none [&+[data-selected]]:rounded-t-none -outline-offset-4 outline-white dark:outline-white forced-colors:outline-[HighlightText]'
     },
     isDisabled: {
       true: 'text-slate-300 dark:text-zinc-600 forced-colors:text-[GrayText]'
@@ -61,7 +61,7 @@ export const dropdownItemStyles = tv({
       true: 'text-gray-300 dark:text-zinc-600 forced-colors:text-[GrayText]'
     },
     isFocused: {
-      true: 'bg-blue-600 text-white forced-colors:bg-[Highlight] forced-colors:text-[HighlightText]'
+      true: 'bg-fuchsia-600 text-white forced-colors:bg-[Highlight] forced-colors:text-[HighlightText]'
     }
   },
   compoundVariants: [

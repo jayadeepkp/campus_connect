@@ -1,5 +1,6 @@
 import { useMutation, useQuery } from "@tanstack/react-query"
-import { array, BaseIssue, BaseSchema, boolean, is, literal, never, number, parse, safeParse, strictObject, string, union } from "valibot"
+import { createContext, useContext } from "react"
+import { array, BaseIssue, BaseSchema, boolean, date, is, isoTimestamp, literal, never, number, parse, pipe, safeParse, strictObject, string, transform, union, unknown } from "valibot"
 
 export type AuthContext = {
   user: {
@@ -119,7 +120,11 @@ const registerResponse = response(strictObject({
   user,
 }))
 
-export function useRegister(auth: AuthContext) {
+const parseDate = pipe(string(), isoTimestamp(), transform(str => new Date(str)))
+
+export function useRegister() {
+  const auth = useAuthContext()
+
   return useMutation({
     mutationFn: (data: RegisterRequest): Promise<OkResponse<RegisterResponse>> => api({
       endpoint: '/auth/register',
@@ -149,7 +154,9 @@ const loginResponse = response(strictObject({
   user,
 }))
 
-export function useLogin(auth: AuthContext) {
+export function useLogin() {
+  const auth = useAuthContext()
+
   return useMutation({
     mutationFn: (data: LoginRequest): Promise<OkResponse<LoginResponse>> => api({
       endpoint: '/auth/login',
@@ -170,7 +177,9 @@ export type ForgotRequest = {
 
 export type ForgotResponse = ResponseMessage
 
-export function useForgot(auth: AuthContext) {
+export function useForgot() {
+  const auth = useAuthContext()
+
   return useMutation({
     mutationFn: (data: ForgotRequest): Promise<OkResponseMessage> => api({
       endpoint: '/auth/forgot',
@@ -190,7 +199,9 @@ export type ResetWithCodeRequest = {
 
 export type ResetWithCodeResponse = ResponseMessage
 
-export function useResetWithCode(auth: AuthContext) {
+export function useResetWithCode() {
+  const auth = useAuthContext()
+
   return useMutation({
     mutationFn: (data: ResetWithCodeRequest): Promise<OkResponseMessage> => api({
       endpoint: '/auth/reset-with-code',
@@ -211,7 +222,9 @@ export function isKnownError(object: unknown): object is { ok: false; error: str
   return is(knownError, object)
 }
 
-export function useLogout(auth: AuthContext) {
+export function useLogout() {
+  const auth = useAuthContext()
+
   return useMutation({
     async mutationFn() {
       auth.loggedOut()
@@ -238,33 +251,42 @@ export function initialUser() {
 }
 
 export type Post = {
+  _id: string
   title: string
   body: string
-  author: unknown
+  author: string
   authorName: string
   authorEmail: string
   likes: unknown[]
   comments: {
-    userId: unknown
+    userId: string
     text: string
-    createdAt: unknown
+    createdAt: Date
   }[]
   tags: string[]
+  edited: boolean
+  createdAt: Date
+  updatedAt: Date
 }
 
 const post = strictObject({
+  _id: string(),
   title: string(),
   body: string(),
-  author: never(),
+  author: string(),
   authorName: string(),
   authorEmail: string(),
   likes: array(never()),
   comments: array(strictObject({
-    userId: never(),
+    userId: string(),
     text: string(),
-    createdAt: never(),
+    createdAt: parseDate,
   })),
   tags: array(string()),
+  edited: boolean(),
+  createdAt: parseDate,
+  updatedAt: parseDate,
+  __v: unknown(),
 })
 
 const postResponse = response(post)
@@ -276,7 +298,9 @@ export type CreatePostRequest = {
 
 export type CreatePostResponse = Post
 
-export function useCreatePost(auth: AuthContext) {
+export function useCreatePost() {
+  const auth = useAuthContext()
+
   return useMutation({
     mutationFn: (data: CreatePostRequest): Promise<OkResponse<CreatePostResponse>> => api({
       endpoint: '/posts',
@@ -285,12 +309,17 @@ export function useCreatePost(auth: AuthContext) {
       method: "POST",
       body: data,
     }),
+    onSuccess(_data, _variables, _result, context) {
+      context.client.invalidateQueries({ queryKey: ['posts'] })
+    },
   })
 }
 
 export type GetPostResponse = Post
 
-export function useGetPost(id: string, auth: AuthContext) {
+export function useGetPost(id: string, ) {
+  const auth = useAuthContext()
+
   return useQuery({
     queryKey: ['posts', 'one', id] as const,
     queryFn: ({ queryKey }): Promise<OkResponse<GetPostResponse>> => api({
@@ -310,7 +339,9 @@ export type EditPostRequest = {
 
 export type EditPostResponse = Post
 
-export function useEditPost(auth: AuthContext) {
+export function useEditPost() {
+  const auth = useAuthContext()
+
   return useMutation({
     mutationFn: ({ id, ...data }: EditPostRequest): Promise<OkResponse<EditPostResponse>> => api({
       endpoint: `/posts/${id}`,
@@ -319,6 +350,9 @@ export function useEditPost(auth: AuthContext) {
       method: "PUT",
       body: data,
     }),
+    onSuccess(_data, _variables, _result, context) {
+      context.client.invalidateQueries({ queryKey: ['posts'] })
+    },
   })
 }
 
@@ -328,7 +362,9 @@ export type DeletePostRequest = {
 
 export type DeletePostResponse = Post
 
-export function useDeletePost(auth: AuthContext) {
+export function useDeletePost() {
+  const auth = useAuthContext()
+
   return useMutation({
     mutationFn: ({ id }: DeletePostRequest): Promise<OkResponse<DeletePostResponse>> => api({
       endpoint: `/posts/${id}`,
@@ -336,6 +372,9 @@ export function useDeletePost(auth: AuthContext) {
       authContext: auth,
       method: "DELETE",
     }),
+    onSuccess(_data, _variables, _result, context) {
+      context.client.invalidateQueries({ queryKey: ['posts'] })
+    },
   })
 }
 
@@ -355,7 +394,9 @@ const toggleLikeResponse = response(strictObject({
   postId: string(),
 }))
 
-export function useToggleLike(auth: AuthContext) {
+export function useToggleLike() {
+  const auth = useAuthContext()
+
   return useMutation({
     mutationFn: ({ id }: ToggleLikeRequest): Promise<OkResponse<ToggleLikeResponse>> => api({
       endpoint: `/posts/${id}/like`,
@@ -363,6 +404,9 @@ export function useToggleLike(auth: AuthContext) {
       authContext: auth,
       method: "POST",
     }),
+    onSuccess(_data, _variables, _result, context) {
+      context.client.invalidateQueries({ queryKey: ['posts'] })
+    },
   })
 }
 
@@ -383,7 +427,9 @@ const addCommentResponse = response(strictObject({
   comments: array(never()),
 }))
 
-export function useAddComment(auth: AuthContext) {
+export function useAddComment() {
+  const auth = useAuthContext()
+
   return useMutation({
     mutationFn: ({ id, ...data }: AddCommentRequest): Promise<OkResponse<AddCommentResponse>> => api({
       endpoint: `/posts/${id}/comment`,
@@ -392,6 +438,9 @@ export function useAddComment(auth: AuthContext) {
       method: "POST",
       body: data,
     }),
+    onSuccess(_data, _variables, _result, context) {
+      context.client.invalidateQueries({ queryKey: ['posts'] })
+    },
   })
 }
 
@@ -415,7 +464,9 @@ const replyToCommentResponse = response(strictObject({
   reply: never(),
 }))
 
-export function useReplyToComment(auth: AuthContext) {
+export function useReplyToComment() {
+  const auth = useAuthContext()
+
   return useMutation({
     mutationFn: ({ postId, commentId, ...data }: ReplyToCommentRequest): Promise<OkResponse<ReplyToCommentResponse>> => api({
       endpoint: `/posts/${postId}/comment/${commentId}/reply`,
@@ -424,6 +475,9 @@ export function useReplyToComment(auth: AuthContext) {
       method: "POST",
       body: data,
     }),
+    onSuccess(_data, _variables, _result, context) {
+      context.client.invalidateQueries({ queryKey: ['posts'] })
+    },
   })
 }
 
@@ -444,7 +498,9 @@ const deleteCommentResponse = response(strictObject({
   comments: array(never()),
 }))
 
-export function useDeleteComment(auth: AuthContext) {
+export function useDeleteComment() {
+  const auth = useAuthContext()
+
   return useMutation({
     mutationFn: ({ postId, commentId }: DeleteCommentRequest): Promise<OkResponse<DeleteCommentResponse>> => api({
       endpoint: `/posts/${postId}/comment/${commentId}`,
@@ -455,15 +511,13 @@ export function useDeleteComment(auth: AuthContext) {
   })
 }
 
-export type MyPostsResponse = {
-  posts: Post[]
-}
+export type MyPostsResponse = Post[]
 
-const myPostsResponse = response(strictObject({
-  posts: array(post),
-}))
+const myPostsResponse = response(array(post))
 
-export function useMyPosts(auth: AuthContext) {
+export function useMyPosts() {
+  const auth = useAuthContext()
+
   return useQuery({
     queryKey: ['posts', 'mine'],
     queryFn: (): Promise<OkResponse<MyPostsResponse>> => api({
@@ -475,15 +529,13 @@ export function useMyPosts(auth: AuthContext) {
   })
 }
 
-export type FeedPostsResponse = {
-  posts: Post[]
-}
+export type FeedPostsResponse = Post[]
 
-const feedPostsResponse = response(strictObject({
-  posts: array(post),
-}))
+const feedPostsResponse = response(array(post))
 
-export function useGetFeedPosts(auth: AuthContext) {
+export function useGetFeedPosts() {
+  const auth = useAuthContext()
+
   return useQuery({
     queryKey: ['posts', 'feed'],
     queryFn: (): Promise<OkResponse<FeedPostsResponse>> => api({
@@ -495,15 +547,13 @@ export function useGetFeedPosts(auth: AuthContext) {
   })
 }
 
-export type TrendingPostsResponse = {
-  posts: Post[]
-}
+export type TrendingPostsResponse = Post[]
 
-const trendingPostsResponse = response(strictObject({
-  posts: array(post),
-}))
+const trendingPostsResponse = response(array(post))
 
-export function useGetTrendingPosts(auth: AuthContext) {
+export function useGetTrendingPosts() {
+  const auth = useAuthContext()
+
   return useQuery({
     queryKey: ['posts', 'trending'],
     queryFn: (): Promise<OkResponse<TrendingPostsResponse>> => api({
@@ -530,7 +580,9 @@ export type MarkNotificationReadResponse = Notification
 
 const markNotificationReadResponse = response(notification)
 
-export function useMarkNotificationRead(auth: AuthContext) {
+export function useMarkNotificationRead() {
+  const auth = useAuthContext()
+
   return useMutation({
     mutationFn: ({ id }: MarkNotificationReadRequest): Promise<OkResponse<MarkNotificationReadResponse>> => api({
       endpoint: `/notifications/${id}/read`,
@@ -538,6 +590,9 @@ export function useMarkNotificationRead(auth: AuthContext) {
       authContext: auth,
       method: "POST",
     }),
+    onSuccess(_data, _variables, _result, context) {
+      context.client.invalidateQueries({ queryKey: ['notifications'] })
+    },
   })
 }
 
@@ -545,7 +600,9 @@ export type MarkAllNotificationsReadResponse = 'ok'
 
 const markAllNotificationsReadResponse = response(literal('ok'))
 
-export function useMarkAllNotificationsRead(auth: AuthContext) {
+export function useMarkAllNotificationsRead() {
+  const auth = useAuthContext()
+
   return useMutation({
     mutationFn: (): Promise<OkResponse<MarkAllNotificationsReadResponse>> => api({
       endpoint: `/notifications/read-all`,
@@ -553,6 +610,9 @@ export function useMarkAllNotificationsRead(auth: AuthContext) {
       authContext: auth,
       method: "POST",
     }),
+    onSuccess(_data, _variables, _result, context) {
+      context.client.invalidateQueries({ queryKey: ['notifications'] })
+    },
   })
 }
 
@@ -560,7 +620,9 @@ export type GetMyNotificationsResponse = Notification[]
 
 const getMyNotificationsResponse = response(array(notification))
 
-export function useGetMyNotifications(auth: AuthContext) {
+export function useGetMyNotifications() {
+  const auth = useAuthContext()
+
   return useQuery({
     queryKey: ['notifications'],
     queryFn: (): Promise<OkResponse<GetMyNotificationsResponse>> => api({
@@ -570,4 +632,10 @@ export function useGetMyNotifications(auth: AuthContext) {
       method: "GET",
     }),
   })
+}
+
+export const Auth = createContext<AuthContext>(null!)
+
+export function useAuthContext() {
+  return useContext(Auth)
 }

@@ -1,21 +1,19 @@
 import CreatePostForm from "~/components/CreatePostForm"
 import PostCard from "~/components/PostCard"
-import { useState } from "react"
-import { getMockPosts } from "~/api/mockApi"
 import { Button } from "~/ui/Button";
-
-
 import { createFileRoute } from '@tanstack/react-router'
-import { useLogout } from "~/api/hooks";
+import { useAuthContext, useGetFeedPosts, useLogout } from "~/api/hooks";
+import { StandardErrorBox } from "~/ui/ErrorBox";
+import { ProgressBar } from "~/ui/ProgressBar";
 
 export const Route = createFileRoute('/_authenticated/')({
   component: RouteComponent,
 })
 
 function RouteComponent() {
-  const [posts, setPosts] = useState(getMockPosts());
-  const { auth } = Route.useRouteContext()
-  const logout = useLogout(auth)
+  const auth = useAuthContext()
+  const { isPending, data, error } = useGetFeedPosts()
+  const logout = useLogout()
 
   const handleAddPost = (text: string) => {
     setPosts([
@@ -50,24 +48,29 @@ function RouteComponent() {
         {/* Post creation form */}
         <CreatePostForm onPost={handleAddPost} />
 
-        {/* Feed */}
-        <section className="pt-12 space-y-4">
-          {posts.length === 0 ? (
-            <p>
-              No posts yet — share something with your friends!
-            </p>
-          ) : (
-            posts.map((p) => (
-              <PostCard
-                key={p.id}
-                post={p}
-                canEdit={p.author === auth.user!.user.name}
-                onDelete={() => handleDelete(p.id)}
-                onEdit={(newText: string) => handleEdit(p.id, newText)}
-              />
-            ))
-          )}
-        </section>
+        <StandardErrorBox error={error} explanation="Failed to load trending posts" className="mt-12" />
+
+        {isPending && <ProgressBar label="Loading posts..." className="mt-12" isIndeterminate />}
+
+        {data !== undefined &&
+          <section className="pt-12 space-y-4">
+            {data.data.length === 0 ? (
+              <p>
+                No posts yet — share something with your friends!
+              </p>
+            ) : (
+              data.data.map((p) => (
+                <PostCard
+                  key={p.id}
+                  post={p}
+                  canEdit={p.author === auth.user!.user.name}
+                  onDelete={() => handleDelete(p.id)}
+                  onEdit={(newText: string) => handleEdit(p.id, newText)}
+                />
+              ))
+            )}
+          </section>
+        }
       </div>
     </>
 

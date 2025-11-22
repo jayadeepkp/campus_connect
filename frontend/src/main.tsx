@@ -5,7 +5,7 @@ import { createRouter, RouterProvider } from "@tanstack/react-router"
 import { routeTree } from './routeTree.gen'
 import { Context } from "./routes/__root"
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query"
-import { initialUser } from "./api/hooks"
+import { Auth, initialUser } from "./api/hooks"
 
 const router = createRouter({
   routeTree,
@@ -44,7 +44,9 @@ function App() {
 
   return (
     <StrictMode>
-      <RouterProvider router={router} context={context.current} />
+      <Auth.Provider value={context.current.auth}>
+        <RouterProvider router={router} context={context.current} />
+      </Auth.Provider>
     </StrictMode>
   )  
 }

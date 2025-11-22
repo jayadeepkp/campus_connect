@@ -17,13 +17,12 @@ export const Route = createFileRoute('/_unauthenticated/recovery/code')({
 function RouteComponent() {
   const navigate = Route.useNavigate()
   const search = Route.useSearch()
-  const { auth } = Route.useRouteContext()
 
   const [code, setCode] = useState("")
   const [password, setPassword] = useState("")
 
-  const resetWithCode = useResetWithCode(auth)
-  const login = useLogin(auth)
+  const resetWithCode = useResetWithCode()
+  const login = useLogin()
 
   const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault()
