@@ -1,15 +1,37 @@
+// server/middleware/auth.js
 import jwt from 'jsonwebtoken';
+import { User } from '../models/User.js';
 
-export function auth(req, res, next) {
-  const hdr = req.headers.authorization || '';
-  const token = hdr.startsWith('Bearer ') ? hdr.slice(7) : null;
-  if (!token) return res.status(401).json({ ok: false, error: 'Missing token' });
-
+// This middleware checks the Authorization: Bearer <token> header
+// and attaches the authenticated user to req.user
+export async function requireAuth(req, res, next) {
   try {
+    const header = req.headers.authorization || '';
+    const [type, token] = header.split(' ');
+
+    if (type !== 'Bearer' || !token) {
+      return res
+        .status(401)
+        .json({ ok: false, error: 'Missing or invalid Authorization header' });
+    }
+
+    // Decode token using the same secret used in auth routes
     const payload = jwt.verify(token, process.env.JWT_SECRET);
-    req.user = { id: payload.id, email: payload.email };
+
+    const user = await User.findById(payload.id);
+    if (!user) {
+      return res
+        .status(401)
+        .json({ ok: false, error: 'User not found for this token' });
+    }
+
+    // Attach user to request so controllers can trust req.user
+    req.user = user;
     next();
-  } catch {
-    return res.status(401).json({ ok: false, error: 'Invalid token' });
+  } catch (err) {
+    console.error('Auth error:', err);
+    return res
+      .status(401)
+      .json({ ok: false, error: 'Invalid or expired token' });
   }
 }
