@@ -1,3 +1,4 @@
+// server/server.js
 import 'dotenv/config';
 import express from 'express';
 import morgan from 'morgan';
@@ -6,6 +7,7 @@ import { connectDB } from './config/db.js';
 import { errorHandler } from './middleware/error.js';
 
 import authRoutes from './routes/auth.routes.js';
+import postRoutes from './routes/post.routes.js'; 
 
 const app = express();
 
@@ -16,11 +18,12 @@ app.use(morgan('dev'));
 
 // health
 app.get('/', (req, res) => {
-  res.json({ ok: true, message: 'Auth & Recovery API running' });
+  res.json({ ok: true, message: 'Auth, Recovery & Posts API running' });
 });
 
 // routes
 app.use('/api/auth', authRoutes);
+app.use('/api/posts', postRoutes);               
 
 // error handler
 app.use(errorHandler);
@@ -32,6 +35,7 @@ const MONGO_URI = process.env.MONGO_URI;
 (async () => {
   await connectDB(MONGO_URI);
   app.listen(PORT, () => {
-    console.log(`✅ Server on http://localhost:${PORT}`);
+    console.log(`Server on http://localhost:${PORT}`);
+    console.log(`Connected to Mongo: ${MONGO_URI ? 'YES' : 'NO'}`);
   });
 })();

@@ -1,21 +1,27 @@
+// server/models/Post.js
 import mongoose from 'mongoose';
 
-const PostSchema = new mongoose.Schema(
+const commentSchema = new mongoose.Schema({
+  userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
+  text: { type: String, required: true, trim: true },
+  createdAt: { type: Date, default: Date.now }
+});
+
+const postSchema = new mongoose.Schema(
   {
-    text: {
-      type: String,
-      required: true,
-      trim: true,
-      minLength: [1, "Post cannot be empty"]
-    },
-    poster: {
-      type: mongoose.Types.ObjectId,
-      ref: "user",
-      required: true
-    },
-    edited: Boolean
+    author: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
+    authorName: { type: String, required: true, trim: true },
+    authorEmail: { type: String, required: true, trim: true },
+
+    title: { type: String, required: true },
+    body: { type: String, required: true },
+
+    likes: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }],
+    comments: [commentSchema],
+
+    tags: [{ type: String }]
   },
   { timestamps: true }
 );
 
-export const Post =  mongoose.model("Post", PostSchema);
+export const Post = mongoose.model('Post', postSchema);
