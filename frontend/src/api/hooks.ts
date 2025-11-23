@@ -1,6 +1,6 @@
 import { useMutation, useQuery } from "@tanstack/react-query"
 import { createContext, useContext } from "react"
-import { array, BaseIssue, BaseSchema, boolean, is, isoTimestamp, literal, number, parse, pipe, safeParse, strictObject, string, transform, union, unknown } from "valibot"
+import { array, BaseIssue, BaseSchema, boolean, is, isoTimestamp, literal, number, optional, parse, pipe, safeParse, strictObject, string, transform, union, unknown } from "valibot"
 
 export type AuthContext = {
   user: {
@@ -599,10 +599,31 @@ export function useGetTrendingPosts() {
 }
 
 export type Notification = {
-
+  _id: string
+  user: string
+  fromUser: string
+  type: "like" | "comment" | "reply"
+  post: string
+  commentId?: string
+  message: string
+  read: boolean
+  createdAt: Date
+  updatedAt: Date
+  __v: unknown
 }
 
 const notification = strictObject({
+  _id: string(),
+  user: string(),
+  fromUser: string(),
+  type: union([literal('like'), literal('comment'), literal('reply')]),
+  post: string(),
+  commentId: optional(string()),
+  message: string(),
+  read: boolean(),
+  createdAt: parseDate,
+  updatedAt: parseDate,
+  __v: unknown(),
 })
 
 export type MarkNotificationReadRequest = {
@@ -664,6 +685,7 @@ export function useGetMyNotifications() {
       authContext: auth,
       method: "GET",
     }),
+    refetchInterval: 15000,
   })
 }
 

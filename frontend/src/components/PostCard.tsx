@@ -4,13 +4,12 @@ import { Button } from "../ui/Button"
 import { type Comment, Post, useAddComment, useAuthContext, useDeletePost, useEditPost, useToggleLike, useDeleteComment, useReplyToComment } from "~/api/hooks"
 import { formatDistanceToNow } from "date-fns"
 import { Form } from "~/ui/Form"
-import { DialogTrigger, MenuTrigger, TooltipTrigger } from "react-aria-components"
+import { MenuTrigger, TooltipTrigger } from "react-aria-components"
 import { Menu, MenuItem } from "~/ui/Menu"
 import { EllipsisVertical, Eraser, Heart, MessageCircle, Pencil, Reply } from "lucide-react"
 import { StandardErrorBox } from "~/ui/ErrorBox"
 import { Tooltip } from "~/ui/Tooltip"
 import { tv } from "tailwind-variants"
-import { Modal } from "~/ui/Modal"
 
 const commentStyles = tv({
   base: "border border-2 shadow-md border-fuchsia-200 dark:border-stone-800 dark:bg-stone-800/50 bg-fuchsia-200/50 rounded-lg",
