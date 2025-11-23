@@ -397,17 +397,61 @@ export async function deleteComment(req, res, next) {
 }
 
 /**
- * Simple trending posts (by newest for now)
+ * Trending posts: sort by likes (desc), then newest.
  * GET /api/posts/trending/all
+ *
+ * Frontend expectations:
+ *  - Response is an array of posts (no { ok, data } wrapper)
+ *  - Each post has: edited (boolean)
+ *  - Each comment has: user, userName, userEmail, replies
  */
 export async function getTrendingPosts(req, res, next) {
   try {
-    const posts = await Post.find({ author: { $nin: req.user.blockedUsers }})
-      .sort({ createdAt: -1 })
-      .limit(20)
-      .lean();
+    // 1) Get all posts visible to this user
+    const blocked = req.user.blockedUsers || [];
 
-    return res.json({ ok: true, data: posts });
+    let rawPosts = await Post.find({
+      author: { $nin: blocked },
+    }).lean();
+
+    // 2) Sort in JS by likesCount desc, then createdAt desc
+    rawPosts.sort((a, b) => {
+      const likesA = Array.isArray(a.likes) ? a.likes.length : 0;
+      const likesB = Array.isArray(b.likes) ? b.likes.length : 0;
+
+      if (likesB !== likesA) return likesB - likesA; // more likes first
+
+      const timeA = new Date(a.createdAt).getTime();
+      const timeB = new Date(b.createdAt).getTime();
+      return timeB - timeA; // newer first if tie
+    });
+
+    // Take top 20
+    rawPosts = rawPosts.slice(0, 20);
+
+    // 3) Normalize shape to match frontend schema
+    const posts = rawPosts.map((post) => {
+      const comments = Array.isArray(post.comments) ? post.comments : [];
+
+      const normalizedComments = comments.map((c) => ({
+        _id: c._id,
+        user: c.user ?? c.userId ?? null,      // fallback if we ever stored userId
+        userName: c.userName ?? "",
+        userEmail: c.userEmail ?? "",
+        text: c.text ?? "",
+        replies: Array.isArray(c.replies) ? c.replies : [],
+        createdAt: c.createdAt ?? null,
+      }));
+
+      return {
+        ...post,
+        edited: post.edited ?? false,
+        comments: normalizedComments,
+      };
+    });
+
+    // 4) IMPORTANT: send just the array (no ok/data)
+    return res.json(posts);
   } catch (err) {
     next(err);
   }
