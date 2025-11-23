@@ -1,7 +1,12 @@
 import { ComponentProps } from "react"
+import { DialogTrigger } from "react-aria-components"
 import { twMerge } from 'tailwind-merge'
 import { BaseIssue, isValiError } from "valibot"
 import { isKnownError } from "~/api/hooks"
+import { Button } from "./Button"
+import { Code } from "lucide-react"
+import { Popover } from "./Popover"
+import { Dialog } from "./Dialog"
 
 export function ErrorBox(props: ComponentProps<'div'>) {
   return (
@@ -17,7 +22,26 @@ function AllIssues({ issues }: { issues: BaseIssue<unknown>[] }): JSX.Element {
       {issues.map(issue => {
         return (
           <li className="bg-white/25 border-white/25 dark:bg-black/25 border dark:border-black/25 rounded-lg p-2">
-            {`${issue.kind}: ${issue.message} at ${issue.path?.map(item => item.key)}`}
+            <DialogTrigger>
+              <Button variant="icon" className="inline-block"><Code size={16} /></Button>
+              <Popover>
+                <Dialog>
+                  <code><pre>{JSON.stringify(issue.input, null, 2)}</pre></code>
+                </Dialog>
+              </Popover>
+            </DialogTrigger>
+            {`${issue.kind} ${issue.type}: ${issue.message} at `}{issue.path?.map(item => {
+              return (
+                <DialogTrigger>
+                  <Button variant="icon" className="inline-block">{`${item.key}`}</Button>
+                  <Popover>
+                    <Dialog>
+                      <code><pre>{JSON.stringify(item.input, null, 2)}</pre></code>
+                    </Dialog>
+                  </Popover>
+                </DialogTrigger>
+              )
+            })}
             {issue.issues !== undefined && <AllIssues issues={issue.issues} />}
           </li>
         )
