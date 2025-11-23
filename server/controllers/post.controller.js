@@ -42,7 +42,7 @@ export async function createPost(req, res, next) {
  */
 export async function getFeed(req, res, next) {
   try {
-    const posts = await Post.find({})
+    const posts = await Post.find({ author: { $nin: req.user.blockedUsers}})
       .sort({ createdAt: -1 })
       .limit(50)
       .lean();
@@ -66,7 +66,17 @@ export async function getPost(req, res, next) {
       return res.status(404).json({ ok: false, error: "Post not found" });
     }
 
-    return res.json({ ok: true, data: post });
+    const blockedIndex = req.user.blockedUsers.findIndex(
+      (id) => String(id) === String(post.author)
+    );
+    
+    let fromBlockedUser;
+    if (blockedIndex === -1)
+      fromBlockedUser = false;
+    else
+      fromBlockedUser = true;
+    
+    return res.json({ ok: true, data: { fromBlockedUser, ...post }});
   } catch (err) {
     next(err);
   }
@@ -392,7 +402,7 @@ export async function deleteComment(req, res, next) {
  */
 export async function getTrendingPosts(req, res, next) {
   try {
-    const posts = await Post.find({})
+    const posts = await Post.find({ author: { $nin: req.user.blockedUsers }})
       .sort({ createdAt: -1 })
       .limit(20)
       .lean();
