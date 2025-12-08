@@ -1,5 +1,8 @@
 import CreatePostForm from "~/components/CreatePostForm"
 import PostCard from "~/components/PostCard"
+import { CreateGroupForm } from "~/components/CreateGroupForm";
+import { MyGroupsList } from "~/components/MyGroupsList";
+import React, { useState } from "react";
 import { Button } from "~/ui/Button";
 import { createFileRoute } from '@tanstack/react-router'
 import { type Notification, useAuthContext, useGetFeedPosts, useGetMyNotifications, useLogout, useMarkNotificationRead, useMarkAllNotificationsRead } from "~/api/hooks";
@@ -11,6 +14,9 @@ import { Popover } from "~/ui/Popover";
 import { Dialog } from "~/ui/Dialog";
 import { tv } from "tailwind-variants";
 import { formatDistanceToNow } from "date-fns";
+
+
+
 
 export const Route = createFileRoute('/_authenticated/')({
   component: RouteComponent,
@@ -75,6 +81,7 @@ function RouteComponent() {
   const auth = useAuthContext()
   const { isPending, data, error } = useGetFeedPosts()
   const logout = useLogout()
+  const [showCreateGroup, setShowCreateGroup] = useState(false);
 
   return (
     <>
@@ -83,6 +90,13 @@ function RouteComponent() {
 
         <div className="flex flex-row items-center space-x-2">
           <NotificationMenu />
+
+          <Button
+          variant="secondary"
+          onPress={() => setShowCreateGroup(prev => !prev)}
+          >
+            {showCreateGroup ? "Close Group Form" : "Create Group"}
+          </Button>
 
           <Button onPress={() => logout.mutate()}>
             Log Out
@@ -93,7 +107,13 @@ function RouteComponent() {
       <div className="flex flex-col lg:w-full lg:max-w-2xl lg:mx-auto py-6">
         {/* Post creation form */}
         <CreatePostForm />
-
+          {showCreateGroup && (
+            <div className="mt-6">
+            <CreateGroupForm />
+            </div>
+          )}
+        <MyGroupsList />
+            
         <StandardErrorBox error={error} explanation="Failed to load trending posts" className="mt-12" />
 
         {isPending && <ProgressBar label="Loading posts..." className="mt-12" isIndeterminate />}

@@ -4,9 +4,9 @@ import { Button } from "../ui/Button"
 import { type Comment, Post, useAddComment, useAuthContext, useDeletePost, useEditPost, useToggleLike, useDeleteComment, useReplyToComment, useReportComment, useReportPost } from "~/api/hooks"
 import { formatDistanceToNow } from "date-fns"
 import { Form } from "~/ui/Form"
-import { Heading, MenuTrigger, PressEvent, TooltipTrigger } from "react-aria-components"
+import { Heading, MenuTrigger, TooltipTrigger } from "react-aria-components"
 import { Menu, MenuItem } from "~/ui/Menu"
-import { EllipsisVertical, Eraser, FlagTriangleRight, Heart, MessageCircle, Pencil, Reply } from "lucide-react"
+import { EllipsisVertical, Eraser, FlagTriangleRight, Heart, MessageCircle, Pencil, Reply, ShieldMinus } from "lucide-react"
 import { StandardErrorBox } from "~/ui/ErrorBox"
 import { Tooltip } from "~/ui/Tooltip"
 import { tv } from "tailwind-variants"
@@ -155,6 +155,34 @@ function Comment({ post, comment }: { post: Post; comment: Comment }) {
   )
 }
 
+function BlockPopup({ open, setOpen, authorName, authorId, onConfirm }: { open: boolean; setOpen(open: boolean): void; authorName: string; authorId: string; onConfirm(id: string): void }) {
+  return (
+    <Modal isDismissable isOpen={open} onOpenChange={setOpen}>
+      <Dialog>
+        <Heading slot="title" className="text-xl font-bold pb-4">
+          Block {authorName}?
+        </Heading>
+
+        <div className="p-4">
+          <p>
+            Once blocked, you will no longer see this user’s posts or comments.
+            You can unblock them later in your profile settings.
+          </p>
+        </div>
+
+        <div className="flex flex-col space-y-2 pt-4">
+          <Button variant="destructive" onPress={() => onConfirm(authorId)}>
+            Confirm Block
+          </Button>
+          <Button variant="secondary" slot="close">
+            Cancel
+          </Button>
+        </div>
+      </Dialog>
+    </Modal>
+  );
+}
+
 export default function PostCard({ post }: { post: Post }) {
   const auth = useAuthContext()
   const [isEditing, setIsEditing] = useState(false)
@@ -217,6 +245,32 @@ export default function PostCard({ post }: { post: Post }) {
 
   const changePending = editPost.isPending || deletePost.isPending || likePost.isPending
 
+  const [blockOpen, setBlockOpen] = useState(false);
+
+  const toggleBlockUser = async (authorId: string) => {
+  try {
+    const token = auth.user?.token;    
+    const res = await fetch(`http://localhost:5050/api/users/${authorId}/block`, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json",
+      },
+    });
+    const json = await res.json();
+    if (!json.ok) {
+      console.error(json.error);
+    } else {
+      console.log(json.data.blocked ? "User blocked" : "User unblocked");
+      //Optional: update local auth state if you keep blockedUsers locally
+      //auth.user!.user.blockedUsers = json.data.blockedUsers;
+    }
+  } catch (err) {
+    console.error(err);
+  }
+    return;
+} 
+  
   return (
     <div className="border border-2 shadow-md border-fuchsia-200 dark:border-stone-800 dark:bg-stone-800/50 bg-fuchsia-200/50 rounded-lg">
       <div className="flex flex-row justify-between items-center p-4 pb-0">
@@ -231,12 +285,15 @@ export default function PostCard({ post }: { post: Post }) {
             <MenuItem isDisabled={!canEdit} onAction={() => edit()}><Pencil size={16} /> Edit</MenuItem>
             <MenuItem isDisabled={!canEdit} onAction={() => deletePost.mutate({ id: post._id })}><Eraser size={16} /> Delete</MenuItem>
             <MenuItem onAction={() => setReportOpen(true)}><FlagTriangleRight size={16} /> Report</MenuItem>
+            <MenuItem isDisabled={auth.user!.user.id === post.author} onAction={() => setBlockOpen(true)}>
+            <ShieldMinus size={16} />{auth.user?.user?.blockedUsers?.includes(post.author) ? "Unblock" : "Block"}</MenuItem>
           </Menu>
         </MenuTrigger>
       </div>
 
       <ReportPopup open={reportOpen} setOpen={setReportOpen} title={post.title} body={post.body} author={post.authorName} submitReport={e => handleReportPost(e)} mutation={reportPost} />
-
+      <BlockPopup open={blockOpen} setOpen={setBlockOpen} authorName={post.authorName} authorId={post.author} onConfirm={id => { setBlockOpen(false); toggleBlockUser(id); }} />
+      
       {isEditing ? (
         <Form onSubmit={handleSubmit} className="p-4 pt-0">
           <TextField

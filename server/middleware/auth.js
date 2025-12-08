@@ -35,3 +35,6 @@ export async function requireAuth(req, res, next) {
       .json({ ok: false, error: 'Invalid or expired token' });
   }
 }
+
+// Alias so other files can import { authMiddleware } from '../middleware/auth.js'
+export { requireAuth as authMiddleware };
