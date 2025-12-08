@@ -451,7 +451,7 @@ export async function getTrendingPosts(req, res, next) {
     });
 
     // 4) IMPORTANT: send just the array (no ok/data)
-    return res.json(posts);
+    return res.json({ ok: true, data: posts });
   } catch (err) {
     next(err);
   }
