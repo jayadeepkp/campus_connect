@@ -4,7 +4,7 @@ import { CreateGroupForm } from "~/components/CreateGroupForm";
 import { MyGroupsList } from "~/components/MyGroupsList";
 import { Button } from "~/ui/Button";
 import { createFileRoute } from '@tanstack/react-router'
-import { type Notification, useAuthContext, useGetFeedPosts, useGetMyNotifications, useLogout, useMarkNotificationRead, useMarkAllNotificationsRead, OkResponse, Post, useGetTrendingPosts } from "~/api/hooks";
+import { type Notification, useAuthContext, useGetFeedPosts, useGetMyNotifications, useLogout, useMarkNotificationRead, useMarkAllNotificationsRead, OkResponse, Post, useGetTrendingPosts, useMyPosts } from "~/api/hooks";
 import { StandardErrorBox } from "~/ui/ErrorBox";
 import { ProgressBar } from "~/ui/ProgressBar";
 import { DialogTrigger } from "react-aria-components";
@@ -108,6 +108,7 @@ function RouteComponent() {
   const auth = useAuthContext()
   const feedPosts = useGetFeedPosts()
   const trendingPosts = useGetTrendingPosts()
+  const myPosts = useMyPosts()
   const logout = useLogout()
 
   return (
@@ -139,14 +140,18 @@ function RouteComponent() {
 
         <Tabs className="pt-12">
           <TabList aria-label="Post categories">
-            <Tab id="trending">Trending Posts</Tab>
-            <Tab id="feed">My Feed</Tab>
+            <Tab id="trending">Hottest Posts</Tab>
+            <Tab id="feed">Recent Posts</Tab>
+            <Tab id="mine">My Posts</Tab>
           </TabList>
           <TabPanel id="trending">
             <PostFeed posts={trendingPosts} />
           </TabPanel>
           <TabPanel id="feed">
             <PostFeed posts={feedPosts} />
+          </TabPanel>
+          <TabPanel id="mine">
+            <PostFeed posts={myPosts} />
           </TabPanel>
         </Tabs>
 
