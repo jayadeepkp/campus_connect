@@ -18,7 +18,7 @@ function RouteComponent() {
   const [linkBlueId, setLinkBlueId] = useState("");
   const [password, setPassword] = useState("");
 
-  const login = useLogin(auth)
+  const login = useLogin()
 
   const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault()

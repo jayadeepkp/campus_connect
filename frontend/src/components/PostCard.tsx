@@ -4,9 +4,9 @@ import { Button } from "../ui/Button"
 import { type Comment, Post, useAddComment, useAuthContext, useDeletePost, useEditPost, useToggleLike, useDeleteComment, useReplyToComment, useReportComment, useReportPost } from "~/api/hooks"
 import { formatDistanceToNow } from "date-fns"
 import { Form } from "~/ui/Form"
-import { Heading, MenuTrigger, PressEvent, TooltipTrigger } from "react-aria-components"
+import { Heading, MenuTrigger, TooltipTrigger } from "react-aria-components"
 import { Menu, MenuItem } from "~/ui/Menu"
-import { EllipsisVertical, Eraser, FlagTriangleRight, Heart, MessageCircle, Pencil, Reply } from "lucide-react"
+import { EllipsisVertical, Eraser, FlagTriangleRight, Heart, MessageCircle, Pencil, Reply, ShieldMinus } from "lucide-react"
 import { StandardErrorBox } from "~/ui/ErrorBox"
 import { Tooltip } from "~/ui/Tooltip"
 import { tv } from "tailwind-variants"
@@ -155,7 +155,7 @@ function Comment({ post, comment }: { post: Post; comment: Comment }) {
   )
 }
 
-function BlockPopup({ open, setOpen, authorName, authorId, onConfirm }) {
+function BlockPopup({ open, setOpen, authorName, authorId, onConfirm }: { open: boolean; setOpen(open: boolean): void; authorName: string; authorId: string; onConfirm(id: string): void }) {
   return (
     <Modal isDismissable isOpen={open} onOpenChange={setOpen}>
       <Dialog>
@@ -285,14 +285,14 @@ export default function PostCard({ post }: { post: Post }) {
             <MenuItem isDisabled={!canEdit} onAction={() => edit()}><Pencil size={16} /> Edit</MenuItem>
             <MenuItem isDisabled={!canEdit} onAction={() => deletePost.mutate({ id: post._id })}><Eraser size={16} /> Delete</MenuItem>
             <MenuItem onAction={() => setReportOpen(true)}><FlagTriangleRight size={16} /> Report</MenuItem>
-            <MenuItem isDisabled={auth.user!.user._id === post.author} onAction={() => setBlockOpen(true)}>
-            {auth.user?.user?.blockedUsers?.includes(post.author) ? "Unblock" : "Block"} </MenuItem>
+            <MenuItem isDisabled={auth.user!.user.id === post.author} onAction={() => setBlockOpen(true)}>
+            <ShieldMinus size={16} />{auth.user?.user?.blockedUsers?.includes(post.author) ? "Unblock" : "Block"}</MenuItem>
           </Menu>
         </MenuTrigger>
       </div>
 
       <ReportPopup open={reportOpen} setOpen={setReportOpen} title={post.title} body={post.body} author={post.authorName} submitReport={e => handleReportPost(e)} mutation={reportPost} />
-      <BlockPopup open={blockOpen} setOpen={setBlockOpen} authorName={post.authorName} authorId={post.author} onConfirm={(id) => { setBlockOpen(false); toggleBlockUser(id);
+      <BlockPopup open={blockOpen} setOpen={setBlockOpen} authorName={post.authorName} authorId={post.author} onConfirm={id => { setBlockOpen(false); toggleBlockUser(id); }} />
       
       {isEditing ? (
         <Form onSubmit={handleSubmit} className="p-4 pt-0">
