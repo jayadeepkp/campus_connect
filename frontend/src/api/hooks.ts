@@ -804,6 +804,18 @@ export function useToggleBlock() {
   })
 }
 
+export type GroupMember = {
+  _id: string
+  name: string
+  email: string
+}
+
+const groupMember = strictObject({
+  _id: string(),
+  name: string(),
+  email: string(),
+})
+
 export type Group = {
   _id: string
   name: string
@@ -823,6 +835,30 @@ const group = strictObject({
   isPublic: boolean(),
   createdBy: string(),
   members: array(string()),
+  createdAt: parseDate,
+  updatedAt: parseDate,
+  __v: unknown(),
+})
+
+export type GroupDetails = {
+  _id: string
+  name: string
+  description: string
+  isPublic: boolean
+  createdBy: GroupMember
+  members: GroupMember[]
+  createdAt: Date
+  updatedAt: Date
+  __v: unknown
+}
+
+const groupDetails = strictObject({
+  _id: string(),
+  name: string(),
+  description: string(),
+  isPublic: boolean(),
+  createdBy: groupMember,
+  members: array(groupMember),
   createdAt: parseDate,
   updatedAt: parseDate,
   __v: unknown(),
@@ -895,9 +931,9 @@ export type GetGroupRequest = {
   id: string
 }
 
-export type GetGroupResponse = Group
+export type GetGroupResponse = GroupDetails
 
-const getGroupResponse = response(group)
+const getGroupResponse = response(groupDetails)
 
 export function useGetGroup(id: string) {
   const auth = useAuthContext()
@@ -905,7 +941,7 @@ export function useGetGroup(id: string) {
   return useQuery({
     queryKey: ['groups', 'one', id] as const,
     queryFn: ({ queryKey }): Promise<OkResponse<GetGroupResponse>> => api({
-      endpoint: `/groups/${queryKey[1]}`,
+      endpoint: `/groups/${queryKey[2]}`,
       schema: getGroupResponse,
       authContext: auth,
       method: "GET",

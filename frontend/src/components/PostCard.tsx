@@ -250,34 +250,6 @@ export default function PostCard({ post }: { post: Post }) {
   const changePending = editPost.isPending || deletePost.isPending || likePost.isPending
 
   const [blockOpen, setBlockOpen] = useState(false);
-
-  const toggleBlockUser = async (authorId: string) => {
-  try {
-    const token = auth.user?.token;    
-    const res = await fetch(`http://localhost:5050/api/users/${authorId}/block`, {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${token}`,
-        "Content-Type": "application/json",
-      },
-    });
-    const json = await res.json();
-    if (json.ok) {
-      const blocked = json.data.blocked
-
-      if (blocked) {
-        auth.user!.user.blockedUsers.push(authorId)
-      } else {
-        auth.user!.user.blockedUsers = 
-        auth.user!.user.blockedUsers.filter(id => id !== authorId)
-      }
-    }
-  } catch (err) {
-    console.error(err);
-  }
-    return;
-} 
-
   
   return (
     <div className="border border-2 shadow-md border-fuchsia-200 dark:border-stone-800 dark:bg-stone-800/50 bg-fuchsia-200/50 rounded-lg">

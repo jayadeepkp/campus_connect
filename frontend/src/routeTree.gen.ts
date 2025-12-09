@@ -11,14 +11,17 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as UnauthenticatedRouteImport } from './routes/_unauthenticated'
 import { Route as AuthenticatedRouteImport } from './routes/_authenticated'
-import { Route as AuthenticatedIndexRouteImport } from './routes/_authenticated/index'
 import { Route as UnauthenticatedRegisterRouteImport } from './routes/_unauthenticated/register'
+import { Route as AuthenticatedLayoutRouteImport } from './routes/_authenticated/_layout'
 import { Route as UnauthenticatedRecoveryRouteRouteImport } from './routes/_unauthenticated/recovery.route'
 import { Route as UnauthenticatedLoginRouteRouteImport } from './routes/_unauthenticated/login.route'
 import { Route as UnauthenticatedRecoveryIndexRouteImport } from './routes/_unauthenticated/recovery.index'
 import { Route as UnauthenticatedLoginIndexRouteImport } from './routes/_unauthenticated/login.index'
+import { Route as AuthenticatedLayoutIndexRouteImport } from './routes/_authenticated/_layout.index'
 import { Route as UnauthenticatedRecoveryCodeRouteImport } from './routes/_unauthenticated/recovery.code'
 import { Route as UnauthenticatedLoginEmailRouteImport } from './routes/_unauthenticated/login.email'
+import { Route as AuthenticatedLayoutProfileRouteImport } from './routes/_authenticated/_layout.profile'
+import { Route as AuthenticatedLayoutGroupsGroupIdRouteImport } from './routes/_authenticated/_layout.groups.$groupId'
 
 const UnauthenticatedRoute = UnauthenticatedRouteImport.update({
   id: '/_unauthenticated',
@@ -28,15 +31,14 @@ const AuthenticatedRoute = AuthenticatedRouteImport.update({
   id: '/_authenticated',
   getParentRoute: () => rootRouteImport,
 } as any)
-const AuthenticatedIndexRoute = AuthenticatedIndexRouteImport.update({
-  id: '/',
-  path: '/',
-  getParentRoute: () => AuthenticatedRoute,
-} as any)
 const UnauthenticatedRegisterRoute = UnauthenticatedRegisterRouteImport.update({
   id: '/register',
   path: '/register',
   getParentRoute: () => UnauthenticatedRoute,
+} as any)
+const AuthenticatedLayoutRoute = AuthenticatedLayoutRouteImport.update({
+  id: '/_layout',
+  getParentRoute: () => AuthenticatedRoute,
 } as any)
 const UnauthenticatedRecoveryRouteRoute =
   UnauthenticatedRecoveryRouteRouteImport.update({
@@ -62,6 +64,12 @@ const UnauthenticatedLoginIndexRoute =
     path: '/',
     getParentRoute: () => UnauthenticatedLoginRouteRoute,
   } as any)
+const AuthenticatedLayoutIndexRoute =
+  AuthenticatedLayoutIndexRouteImport.update({
+    id: '/',
+    path: '/',
+    getParentRoute: () => AuthenticatedLayoutRoute,
+  } as any)
 const UnauthenticatedRecoveryCodeRoute =
   UnauthenticatedRecoveryCodeRouteImport.update({
     id: '/code',
@@ -74,24 +82,40 @@ const UnauthenticatedLoginEmailRoute =
     path: '/email',
     getParentRoute: () => UnauthenticatedLoginRouteRoute,
   } as any)
+const AuthenticatedLayoutProfileRoute =
+  AuthenticatedLayoutProfileRouteImport.update({
+    id: '/profile',
+    path: '/profile',
+    getParentRoute: () => AuthenticatedLayoutRoute,
+  } as any)
+const AuthenticatedLayoutGroupsGroupIdRoute =
+  AuthenticatedLayoutGroupsGroupIdRouteImport.update({
+    id: '/groups/$groupId',
+    path: '/groups/$groupId',
+    getParentRoute: () => AuthenticatedLayoutRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/login': typeof UnauthenticatedLoginRouteRouteWithChildren
   '/recovery': typeof UnauthenticatedRecoveryRouteRouteWithChildren
   '/register': typeof UnauthenticatedRegisterRoute
-  '/': typeof AuthenticatedIndexRoute
+  '/profile': typeof AuthenticatedLayoutProfileRoute
   '/login/email': typeof UnauthenticatedLoginEmailRoute
   '/recovery/code': typeof UnauthenticatedRecoveryCodeRoute
+  '/': typeof AuthenticatedLayoutIndexRoute
   '/login/': typeof UnauthenticatedLoginIndexRoute
   '/recovery/': typeof UnauthenticatedRecoveryIndexRoute
+  '/groups/$groupId': typeof AuthenticatedLayoutGroupsGroupIdRoute
 }
 export interface FileRoutesByTo {
   '/register': typeof UnauthenticatedRegisterRoute
-  '/': typeof AuthenticatedIndexRoute
+  '/profile': typeof AuthenticatedLayoutProfileRoute
   '/login/email': typeof UnauthenticatedLoginEmailRoute
   '/recovery/code': typeof UnauthenticatedRecoveryCodeRoute
+  '/': typeof AuthenticatedLayoutIndexRoute
   '/login': typeof UnauthenticatedLoginIndexRoute
   '/recovery': typeof UnauthenticatedRecoveryIndexRoute
+  '/groups/$groupId': typeof AuthenticatedLayoutGroupsGroupIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -99,12 +123,15 @@ export interface FileRoutesById {
   '/_unauthenticated': typeof UnauthenticatedRouteWithChildren
   '/_unauthenticated/login': typeof UnauthenticatedLoginRouteRouteWithChildren
   '/_unauthenticated/recovery': typeof UnauthenticatedRecoveryRouteRouteWithChildren
+  '/_authenticated/_layout': typeof AuthenticatedLayoutRouteWithChildren
   '/_unauthenticated/register': typeof UnauthenticatedRegisterRoute
-  '/_authenticated/': typeof AuthenticatedIndexRoute
+  '/_authenticated/_layout/profile': typeof AuthenticatedLayoutProfileRoute
   '/_unauthenticated/login/email': typeof UnauthenticatedLoginEmailRoute
   '/_unauthenticated/recovery/code': typeof UnauthenticatedRecoveryCodeRoute
+  '/_authenticated/_layout/': typeof AuthenticatedLayoutIndexRoute
   '/_unauthenticated/login/': typeof UnauthenticatedLoginIndexRoute
   '/_unauthenticated/recovery/': typeof UnauthenticatedRecoveryIndexRoute
+  '/_authenticated/_layout/groups/$groupId': typeof AuthenticatedLayoutGroupsGroupIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -112,31 +139,38 @@ export interface FileRouteTypes {
     | '/login'
     | '/recovery'
     | '/register'
-    | '/'
+    | '/profile'
     | '/login/email'
     | '/recovery/code'
+    | '/'
     | '/login/'
     | '/recovery/'
+    | '/groups/$groupId'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/register'
-    | '/'
+    | '/profile'
     | '/login/email'
     | '/recovery/code'
+    | '/'
     | '/login'
     | '/recovery'
+    | '/groups/$groupId'
   id:
     | '__root__'
     | '/_authenticated'
     | '/_unauthenticated'
     | '/_unauthenticated/login'
     | '/_unauthenticated/recovery'
+    | '/_authenticated/_layout'
     | '/_unauthenticated/register'
-    | '/_authenticated/'
+    | '/_authenticated/_layout/profile'
     | '/_unauthenticated/login/email'
     | '/_unauthenticated/recovery/code'
+    | '/_authenticated/_layout/'
     | '/_unauthenticated/login/'
     | '/_unauthenticated/recovery/'
+    | '/_authenticated/_layout/groups/$groupId'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -160,19 +194,19 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/_authenticated/': {
-      id: '/_authenticated/'
-      path: '/'
-      fullPath: '/'
-      preLoaderRoute: typeof AuthenticatedIndexRouteImport
-      parentRoute: typeof AuthenticatedRoute
-    }
     '/_unauthenticated/register': {
       id: '/_unauthenticated/register'
       path: '/register'
       fullPath: '/register'
       preLoaderRoute: typeof UnauthenticatedRegisterRouteImport
       parentRoute: typeof UnauthenticatedRoute
+    }
+    '/_authenticated/_layout': {
+      id: '/_authenticated/_layout'
+      path: ''
+      fullPath: ''
+      preLoaderRoute: typeof AuthenticatedLayoutRouteImport
+      parentRoute: typeof AuthenticatedRoute
     }
     '/_unauthenticated/recovery': {
       id: '/_unauthenticated/recovery'
@@ -202,6 +236,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof UnauthenticatedLoginIndexRouteImport
       parentRoute: typeof UnauthenticatedLoginRouteRoute
     }
+    '/_authenticated/_layout/': {
+      id: '/_authenticated/_layout/'
+      path: '/'
+      fullPath: '/'
+      preLoaderRoute: typeof AuthenticatedLayoutIndexRouteImport
+      parentRoute: typeof AuthenticatedLayoutRoute
+    }
     '/_unauthenticated/recovery/code': {
       id: '/_unauthenticated/recovery/code'
       path: '/code'
@@ -216,15 +257,44 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof UnauthenticatedLoginEmailRouteImport
       parentRoute: typeof UnauthenticatedLoginRouteRoute
     }
+    '/_authenticated/_layout/profile': {
+      id: '/_authenticated/_layout/profile'
+      path: '/profile'
+      fullPath: '/profile'
+      preLoaderRoute: typeof AuthenticatedLayoutProfileRouteImport
+      parentRoute: typeof AuthenticatedLayoutRoute
+    }
+    '/_authenticated/_layout/groups/$groupId': {
+      id: '/_authenticated/_layout/groups/$groupId'
+      path: '/groups/$groupId'
+      fullPath: '/groups/$groupId'
+      preLoaderRoute: typeof AuthenticatedLayoutGroupsGroupIdRouteImport
+      parentRoute: typeof AuthenticatedLayoutRoute
+    }
   }
 }
 
+interface AuthenticatedLayoutRouteChildren {
+  AuthenticatedLayoutProfileRoute: typeof AuthenticatedLayoutProfileRoute
+  AuthenticatedLayoutIndexRoute: typeof AuthenticatedLayoutIndexRoute
+  AuthenticatedLayoutGroupsGroupIdRoute: typeof AuthenticatedLayoutGroupsGroupIdRoute
+}
+
+const AuthenticatedLayoutRouteChildren: AuthenticatedLayoutRouteChildren = {
+  AuthenticatedLayoutProfileRoute: AuthenticatedLayoutProfileRoute,
+  AuthenticatedLayoutIndexRoute: AuthenticatedLayoutIndexRoute,
+  AuthenticatedLayoutGroupsGroupIdRoute: AuthenticatedLayoutGroupsGroupIdRoute,
+}
+
+const AuthenticatedLayoutRouteWithChildren =
+  AuthenticatedLayoutRoute._addFileChildren(AuthenticatedLayoutRouteChildren)
+
 interface AuthenticatedRouteChildren {
-  AuthenticatedIndexRoute: typeof AuthenticatedIndexRoute
+  AuthenticatedLayoutRoute: typeof AuthenticatedLayoutRouteWithChildren
 }
 
 const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
-  AuthenticatedIndexRoute: AuthenticatedIndexRoute,
+  AuthenticatedLayoutRoute: AuthenticatedLayoutRouteWithChildren,
 }
 
 const AuthenticatedRouteWithChildren = AuthenticatedRoute._addFileChildren(

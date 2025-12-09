@@ -3,7 +3,7 @@ import { createFileRoute, Link } from "@tanstack/react-router"
 import { Button } from "~/ui/Button"
 import { useAuthContext } from "~/api/hooks"
 
-export const Route = createFileRoute("/_authenticated/profile")({
+export const Route = createFileRoute("/_authenticated/_layout/profile")({
   component: ProfilePage,
 })
 
@@ -66,8 +66,7 @@ function ProfilePage() {
 
       {/* Actions */}
 
-      <Link
-      to="/_authenticated/index"
+      <Link to="/"
       className="text-sm underline hover:text-fuchsia-600">
         ← Back
         </Link>
@@ -86,7 +85,7 @@ function ProfilePage() {
           </Button>
         )}
 
-        <Link to="/_authenticated/settings" className="text-sm underline">
+        <Link to="/" className="text-sm underline">
           Settings
         </Link>
       </div>

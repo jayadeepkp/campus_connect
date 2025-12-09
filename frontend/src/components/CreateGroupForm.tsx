@@ -1,6 +1,6 @@
 // src/components/CreateGroupForm.tsx
-import { useState, FormEvent, useContext } from 'react';
-import { Heading, OverlayTriggerStateContext } from 'react-aria-components';
+import { useState, FormEvent } from 'react';
+import { Heading } from 'react-aria-components';
 import { useCreateGroup } from '~/api/hooks';
 import { Button } from '~/ui/Button';
 import { Checkbox } from '~/ui/Checkbox';
@@ -10,12 +10,11 @@ import { Form } from '~/ui/Form';
 import { Modal } from '~/ui/Modal';
 import { TextAreaField, TextField } from '~/ui/TextField';
 
-export function CreateGroupForm() {
+export function CreateGroupForm({ isOpen, setOpen }: { isOpen: boolean; setOpen(value: boolean): void }) {
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
   const [isPublic, setIsPublic] = useState(true);
   const createGroup = useCreateGroup()
-  const dialogState = useContext(OverlayTriggerStateContext)
 
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault()
@@ -28,11 +27,11 @@ export function CreateGroupForm() {
       description,
       isPublic,
     })
-    dialogState?.close()
+    setOpen(false)
   }
 
   return (
-    <Modal isDismissable>
+    <Modal isDismissable isOpen={isOpen} onOpenChange={setOpen}>
       <Dialog>
         <Heading slot="title" className="text-xl font-bold pb-4">Create a new group</Heading>
 

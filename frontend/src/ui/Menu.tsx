@@ -16,6 +16,7 @@ import {
 } from 'react-aria-components';
 import { dropdownItemStyles } from './ListBox';
 import { Popover, PopoverProps } from './Popover';
+import { createLink } from '@tanstack/react-router';
 
 interface MenuProps<T> extends AriaMenuProps<T> {
   placement?: PopoverProps['placement']
@@ -29,7 +30,7 @@ export function Menu<T extends object>(props: MenuProps<T>) {
   );
 }
 
-export function MenuItem(props: MenuItemProps) {
+export function MenuItem(props: Omit<MenuItemProps, 'href'>) {
   let textValue = props.textValue || (typeof props.children === 'string' ? props.children : undefined);
   return (
     <AriaMenuItem textValue={textValue} {...props} className={dropdownItemStyles}>
@@ -49,6 +50,8 @@ export function MenuItem(props: MenuItemProps) {
     </AriaMenuItem>
   );
 }
+
+export const MenuLink = createLink(MenuItem)
 
 export function MenuSeparator(props: SeparatorProps) {
   return <Separator {...props} className="mx-3 my-1 border-b border-gray-300 dark:border-zinc-700" />
