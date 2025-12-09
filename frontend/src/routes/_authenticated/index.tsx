@@ -158,6 +158,16 @@ function RouteComponent() {
         <span>Campus Connect, {auth.user!.user.name}</span>
 
         <div className="flex flex-row items-center space-x-2">
+          <Link to="/profile"
+            className="flex items-center space-x-2 hover:opacity-80">
+            <div className="h-8 w-8 rounded-full bg-fuchsia-500 text-white flex items-center justify-center text-sm font-bold">
+              {auth.user!.user.name[0]}
+            </div>
+            <span className="text-sm">
+              {auth.user!.user.name}
+            </span>
+          </Link>
+          
           <NotificationMenu />
 
           <DialogTrigger>
