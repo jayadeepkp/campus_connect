@@ -1,47 +1,51 @@
+// server/utils/mailer.js
 import nodemailer from 'nodemailer';
 
-let transporter;
+const {
+  SMTP_HOST,
+  SMTP_PORT,
+  SMTP_SECURE,
+  SMTP_USER,
+  SMTP_PASS,
+  MAIL_FROM,
+} = process.env;
 
-export function getTransporter() {
-  if (transporter) return transporter;
-
-  const host = process.env.SMTP_HOST;
-  const port = parseInt(process.env.SMTP_PORT || '587', 10);
-  const secure = String(process.env.SMTP_SECURE || 'false').toLowerCase() === 'true';
-  const user = process.env.SMTP_USER;
-  const pass = process.env.SMTP_PASS;
-
-  if (!host || !user || !pass) {
-    console.warn('⚠️ SMTP not fully configured. Emails will not send. OTP will be logged to console.');
-    // create a “stub” that pretends to send
-    transporter = {
-      sendMail: async (opts) => {
-        console.log('📧 [DEV/STUB] Would send email:', {
-          to: opts.to,
-          subject: opts.subject,
-          text: opts.text,
-          html: opts.html
-        });
-        return { messageId: 'dev-stub' };
-      }
-    };
-    return transporter;
-  }
-
-  transporter = nodemailer.createTransport({
-    host,
-    port,
-    secure,
-    auth: { user, pass }
-  });
-
-  return transporter;
+if (!SMTP_HOST || !SMTP_PORT || !SMTP_USER || !SMTP_PASS) {
+  console.warn(' SMTP is not fully configured. Password reset emails may fail.');
 }
 
+const transporter = nodemailer.createTransport({
+  host: SMTP_HOST || 'smtp.gmail.com',
+  port: Number(SMTP_PORT) || 587,
+  secure: SMTP_SECURE === 'true' ? true : false, // false for TLS (STARTTLS)
+  auth: {
+    user: SMTP_USER,
+    pass: SMTP_PASS,
+  },
+});
+
+/**
+ * Send an email using the shared transporter.
+ * @param {object} options
+ * @param {string} options.to
+ * @param {string} options.subject
+ * @param {string} [options.text]
+ * @param {string} [options.html]
+ */
 export async function sendEmail({ to, subject, text, html }) {
-  const from = process.env.MAIL_FROM || 'no-reply@example.com';
-  const t = getTransporter();
-  const info = await t.sendMail({ from, to, subject, text, html });
-  console.log('📨 Email dispatched:', info.messageId);
+  if (!to) throw new Error('sendEmail: "to" is required');
+  if (!subject) throw new Error('sendEmail: "subject" is required');
+
+  const from = MAIL_FROM || SMTP_USER;
+
+  const info = await transporter.sendMail({
+    from,
+    to,
+    subject,
+    text,
+    html,
+  });
+
+  console.log(`Email sent to ${to}: ${info.messageId}`);
   return info;
 }
