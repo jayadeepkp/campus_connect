@@ -21,6 +21,7 @@ const groupSchema = new mongoose.Schema(
       ref: 'User',
       required: true,
     },
+    // members of this group
     members: [
       {
         type: mongoose.Schema.Types.ObjectId,
@@ -33,9 +34,7 @@ const groupSchema = new mongoose.Schema(
   }
 );
 
-// Create the model ONCE
 const Group = mongoose.model('Group', groupSchema);
 
-// Export it BOTH ways so your controllers can use either style
 export default Group;
 export { Group };
