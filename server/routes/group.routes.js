@@ -1,21 +1,39 @@
+// server/routes/group.routes.js
 import express from 'express';
-import { createGroup, listGroups } from '../controllers/group.controller.js';
+import {
+  createGroup,
+  listGroups,
+  listMyGroups,
+  deleteGroup,
+  getGroupById,
+  addMemberByEmail,
+} from '../controllers/group.controller.js';
+import {
+  listGroupMessages,
+  createGroupMessage,
+} from '../controllers/groupMessage.controller.js';
 import { authMiddleware } from '../middleware/auth.js';
-import { listMyGroups } from '../controllers/group.controller.js';
-import { getGroupById } from '../controllers/group.controller.js';
-import { deleteGroup } from '../controllers/group.controller.js';
-import { addMemberByEmail } from '../controllers/group.controller.js';
 
 const router = express.Router();
 
-// GET /api/groups - list public groups
+// Public list (not used yet in UI, but fine to keep)
 router.get('/', listGroups);
 
-// POST /api/groups - create a new group (must be logged in)
-router.post('/', authMiddleware, createGroup);
+// My own groups – used for "Your groups"
 router.get('/mine', authMiddleware, listMyGroups);
-router.get('/:id', authMiddleware, getGroupById);
-router.delete('/:id', authMiddleware, deleteGroup);
-router.post('/:id/members', authMiddleware, addMemberByEmail);
+
+// Group details
+router.get('/:groupId', authMiddleware, getGroupById);
+
+// Add member by email (only creator)
+router.post('/:groupId/members', authMiddleware, addMemberByEmail);
+
+// Group chat
+router.get('/:groupId/messages', authMiddleware, listGroupMessages);
+router.post('/:groupId/messages', authMiddleware, createGroupMessage);
+
+// Create + delete
+router.post('/', authMiddleware, createGroup);
+router.delete('/:groupId', authMiddleware, deleteGroup);
 
 export default router;
