@@ -800,7 +800,40 @@ export function useToggleBlock() {
     }),
     onSuccess(_data, _variables, _result, context) {
       context.client.invalidateQueries({ queryKey: ['posts'] })
+      context.client.invalidateQueries({ queryKey: ['blocked'] })
     },
+  })
+}
+
+export type GetBlockedResponse = {
+  id: string
+  name: string
+  email: string
+  major: string
+  department: string
+  year: string
+}[]
+
+const getBlockedResponse = response(array(strictObject({
+  id: string(),
+  name: string(),
+  email: string(),
+  major: string(),
+  department: string(),
+  year: string(),
+})))
+
+export function useGetBlockedUsers() {
+  const auth = useAuthContext()
+
+  return useQuery({
+    queryKey: ['blocked'] as const,
+    queryFn: (): Promise<OkResponse<GetBlockedResponse>> => api({
+      endpoint: `/users/blocked`,
+      schema: getBlockedResponse,
+      authContext: auth,
+      method: "GET",
+    }),
   })
 }
 
