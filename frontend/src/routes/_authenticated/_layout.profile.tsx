@@ -1,14 +1,18 @@
 import { FormEvent, useState } from "react"
 import { createFileRoute, Link } from "@tanstack/react-router"
 import { Button } from "~/ui/Button"
-import { Profile, useAuthContext, useGetMyProfile, useUpdateProfile } from "~/api/hooks"
+import { Profile, useAuthContext, useGetMyProfile, useUpdateProfile, useUpdateSettings } from "~/api/hooks"
 import { TextField, TextAreaField } from "~/ui/TextField"
 import { StandardErrorBox } from "~/ui/ErrorBox"
 import { twMerge } from 'tailwind-merge'
 import { Form } from "~/ui/Form"
+import { Checkbox } from "~/ui/Checkbox"
 
 export const Route = createFileRoute("/_authenticated/_layout/profile")({
   component: ProfilePage,
+  loader: () => ({
+    title: 'Profile'
+  }),
 })
 
 const borderClasses = "border border-2 shadow-md border-fuchsia-200 dark:border-stone-800 dark:bg-stone-800/50 bg-fuchsia-200/50 rounded-lg p-4"
@@ -53,7 +57,7 @@ function ProfileFields({ profileData }: { profileData: Profile }) {
   };
 
   return (
-    <div className={twMerge(borderClasses, "space-y-4")}>
+    <div className={borderClasses}>
       <Form onSubmit={handleSubmit}>
         <TextField label="Major" value={major} onChange={setMajor} placeholder="Unspecified" />
         <TextField label="Department" value={department} onChange={setDepartment} placeholder="Unspecified" />
@@ -65,6 +69,57 @@ function ProfileFields({ profileData }: { profileData: Profile }) {
         </Button>
 
         <StandardErrorBox explanation="Failed to update profile" error={updateProfile.error} />
+      </Form>
+    </div>
+  )
+}
+
+function NotificationSettings({ profileData }: { profileData: Profile }) {
+  const settings = profileData.notificationSettings
+
+  const [likes, setLikes] = useState(settings.likes)
+  const [comments, setComments] = useState(settings.comments)
+  const [replies, setReplies] = useState(settings.replies)
+  const [system, setSystem] = useState(settings.system)
+
+  const dirty = likes != settings.likes || comments != settings.comments || replies != settings.replies || system != settings.system
+
+  const updateSettings = useUpdateSettings()
+
+  const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
+    e.preventDefault()
+    if (!e.currentTarget.checkValidity()) {
+      return
+    }
+
+    const result = await updateSettings.mutateAsync({
+      notificationSettings: {
+        likes,
+        comments,
+        replies,
+        system,
+      }
+    })
+
+    setLikes(result.data.notificationSettings.likes)
+    setComments(result.data.notificationSettings.comments)
+    setReplies(result.data.notificationSettings.replies)
+    setSystem(result.data.notificationSettings.system)
+  }
+
+  return (
+    <div className={twMerge(borderClasses, "space-y-4")}>
+      <Form onSubmit={handleSubmit}>
+        <Checkbox isSelected={likes} onChange={setLikes}>Receive notifications for likes</Checkbox>
+        <Checkbox isSelected={comments} onChange={setComments}>Receive notifications for comments</Checkbox>
+        <Checkbox isSelected={replies} onChange={setReplies}>Receive notifications for replies</Checkbox>
+        <Checkbox isSelected={system} onChange={setSystem}>Receive notifications for system alerts</Checkbox>
+
+        <Button variant="secondary" type="submit" isPending={updateSettings.isPending} isDisabled={!dirty}>
+          Save Settings
+        </Button>
+
+        <StandardErrorBox explanation="Failed to update notification settings" error={null} />
       </Form>
     </div>
   )
@@ -103,6 +158,9 @@ function ProfilePage() {
       {/* Profile Fields */}
       <ProfileFields profileData={profileData} />
 
+      {/* Actions */}
+      <NotificationSettings profileData={profileData} />
+
       {/* Stats */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-center">
         <Stat label="Posts" value={profileData.postsCount} />
@@ -110,47 +168,6 @@ function ProfilePage() {
         <Stat label="Likes Received" value={profileData.likesReceivedCount} />
         <Stat label="Comments" value={profileData.commentsReceivedCount} />
       </div>
-
-      {/* Actions */}
-
-      <div className="flex items-center space-x-4">
-        <Link to="/" className="text-sm underline">
-          Settings
-        </Link>
-      </div>
-    </div>
-  )
-}
-
-/* ----------------------------- Components ----------------------------- */
-
-function EditableField({
-  label,
-  value,
-  isEditing,
-  multiline,
-}: EditableFieldProps) {
-  const [localValue, setLocalValue] = useState(value ?? "")
-
-  return (
-    <div className="space-y-1">
-      <div className="text-sm font-medium opacity-70">{label}</div>
-
-      {!isEditing ? (
-        <div className="opacity-50">{value || "—"}</div>
-      ) : multiline ? (
-        <TextAreaField
-          className="w-full"
-          value={localValue}
-          onChange={setLocalValue}
-        />
-      ) : (
-        <TextField
-          className="w-full"
-          value={localValue}
-          onChange={setLocalValue}
-        />
-      )}
     </div>
   )
 }

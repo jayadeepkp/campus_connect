@@ -1245,3 +1245,58 @@ export function useUpdateProfile() {
     },
   })
 }
+
+export type UpdateSettingsRequest = {
+  name?: string
+  notificationSettings?: {
+    likes?: boolean
+    comments?: boolean
+    replies?: boolean
+    system?: boolean
+  }
+}
+
+export type UpdateSettingsResponse = {
+  id: string
+  name: string
+  email: string
+  notificationSettings: {
+    likes: boolean
+    comments: boolean
+    replies: boolean
+    system: boolean
+  }
+  createdAt: Date
+  isDeleted: boolean
+}
+
+const updateSettingsResponse = strictObject({
+  id: string(),
+  name: string(),
+  email: string(),
+  notificationSettings: strictObject({
+    likes: boolean(),
+    comments: boolean(),
+    replies: boolean(),
+    system: boolean(),
+  }),
+  createdAt: parseDate,
+  isDeleted: boolean(),
+})
+
+export function useUpdateSettings() {
+  const auth = useAuthContext()
+
+  return useMutation({
+    mutationFn: (data: UpdateSettingsRequest): Promise<OkResponse<UpdateSettingsResponse>> => api({
+      endpoint: `/users/settings/account`,
+      schema: response(updateSettingsResponse),
+      authContext: auth,
+      method: "PUT",
+      body: data,
+    }),
+    onSuccess(_data, _variables, _result, context) {
+      context.client.invalidateQueries({ queryKey: ['users', 'me'] })
+    },
+  })
+}
