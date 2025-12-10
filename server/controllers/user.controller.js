@@ -264,6 +264,38 @@ export async function getBlockedUsers(req, res, next) {
   }
 }
 
+export async function getPublicProfile(req, res, next) {
+  try {
+    const { id } = req.params;
+
+    const user = await User.findById(id).select(
+      "name email major department year bio interests createdAt"
+    );
+
+    if (!user) {
+      return res.status(404).json({ ok: false, error: "User not found" });
+    }
+
+    // Do NOT return passwords or settings
+    return res.json({
+      ok: true,
+      data: {
+        id: user._id,
+        name: user.name,
+        email: user.email,
+        major: user.major,
+        department: user.department,
+        year: user.year,
+        bio: user.bio,
+        interests: user.interests,
+        createdAt: user.createdAt
+      }
+    });
+  } catch (err) {
+    next(err);
+  }
+}
+
 /**
  * GET /api/users/discover
  * Find similar people: same major/department + overlapping interests.

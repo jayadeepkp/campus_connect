@@ -11,10 +11,13 @@ import {
   discoverPeople,
   toggleBlock,
   deleteAccount,
+  getPublicProfile,
 } from "../controllers/user.controller.js";
 
 const router = Router();
 
+// Public profile of any user
+router.get('/:id/public', requireAuth, getPublicProfile);
 // Profile
 router.get('/me', requireAuth, getMe);
 router.put('/me/profile', requireAuth, updateProfile);
