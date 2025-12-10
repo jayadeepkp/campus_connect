@@ -12,6 +12,7 @@ import notificationRoutes from "./routes/notification.routes.js";
 import userRoutes from './routes/user.routes.js';
 import reportRoutes from './routes/report.routes.js';
 import groupRoutes from './routes/group.routes.js';
+import directMessageRoutes from './routes/directMessage.routes.js';
 
 const app = express();
 
@@ -19,6 +20,8 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 app.use(morgan('dev'));
+app.use('/api/groups', groupRoutes);
+app.use('/api/direct-messages', directMessageRoutes);
 
 // health
 app.get('/', (req, res) => {
