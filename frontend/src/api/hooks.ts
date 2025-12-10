@@ -763,7 +763,7 @@ export function useReportComment() {
 
   return useMutation({
     mutationFn: ({ postId, commentId, ...data }: ReportCommentRequest): Promise<OkResponse<ReportCommentResponse>> => api({
-      endpoint: `/report/posts/${postId}/comment/${commentId}`,
+      endpoint: `/reports/post/${postId}/comment/${commentId}`,
       schema: reportCommentResponse,
       authContext: auth,
       method: "POST",
