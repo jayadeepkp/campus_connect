@@ -1,7 +1,7 @@
 import { FormEvent, useState } from "react"
 import { createFileRoute, Link } from "@tanstack/react-router"
 import { Button } from "~/ui/Button"
-import { Profile, useAuthContext, useGetMyProfile, useUpdateProfile, useUpdateSettings } from "~/api/hooks"
+import { Profile, useAuthContext, useChangePassword, useGetMyProfile, useUpdateProfile, useUpdateSettings } from "~/api/hooks"
 import { TextField, TextAreaField } from "~/ui/TextField"
 import { StandardErrorBox } from "~/ui/ErrorBox"
 import { twMerge } from 'tailwind-merge'
@@ -119,7 +119,44 @@ function NotificationSettings({ profileData }: { profileData: Profile }) {
           Save Settings
         </Button>
 
-        <StandardErrorBox explanation="Failed to update notification settings" error={null} />
+        <StandardErrorBox explanation="Failed to update notification settings" error={updateSettings.error} />
+      </Form>
+    </div>
+  )
+}
+
+function PasswordSettings() {
+  const [currentPassword, setCurrentPassword] = useState("")
+  const [newPassword, setNewPassword] = useState("")
+
+  const changePassword = useChangePassword()
+
+  const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
+    e.preventDefault()
+    if (!e.currentTarget.checkValidity()) {
+      return
+    }
+
+    await changePassword.mutateAsync({
+      currentPassword,
+      newPassword,
+    })
+
+    setCurrentPassword("")
+    setNewPassword("")
+  }
+
+  return (
+    <div className={twMerge(borderClasses, "space-y-4")}>
+      <Form onSubmit={handleSubmit}>
+        <TextField label="Current Password" type="password" value={currentPassword} onChange={setCurrentPassword} />
+        <TextField label="New Password" type="password" value={newPassword} onChange={setNewPassword} />
+
+        <Button variant="secondary" type="submit" isPending={changePassword.isPending} isDisabled={currentPassword.length === 0 || newPassword.length === 0}>
+          Change Password
+        </Button>
+
+        <StandardErrorBox explanation="Failed to change password" error={changePassword.error} />
       </Form>
     </div>
   )
@@ -160,6 +197,8 @@ function ProfilePage() {
 
       {/* Actions */}
       <NotificationSettings profileData={profileData} />
+
+      <PasswordSettings />
 
       {/* Stats */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-center">

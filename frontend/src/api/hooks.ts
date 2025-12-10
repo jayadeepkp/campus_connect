@@ -1344,3 +1344,39 @@ export function useDiscoverUsers() {
     }),
   })
 }
+
+type ChangePasswordRequest = {
+  currentPassword: string
+  newPassword: string
+}
+
+export function useChangePassword() {
+  const auth = useAuthContext()
+
+  return useMutation({
+    mutationFn: (data: ChangePasswordRequest): Promise<OkResponseMessage> => api({
+      endpoint: `/users/settings/password`,
+      schema: responseMessage,
+      authContext: auth,
+      method: "POST",
+      body: data,
+    }),
+  })
+}
+
+export function useDeleteAccount() {
+  const auth = useAuthContext()
+
+  return useMutation({
+    mutationFn: (): Promise<OkResponseMessage> => api({
+      endpoint: `/users/me`,
+      schema: responseMessage,
+      authContext: auth,
+      method: "DELETE",
+    }),
+    onSuccess(_data, _variables, _result, context) {
+      context.client.invalidateQueries()
+      auth.loggedOut()
+    },
+  })
+}
