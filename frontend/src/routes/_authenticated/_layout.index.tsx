@@ -10,6 +10,7 @@ import {
   Post,
   useGetTrendingPosts,
   useMyPosts,
+  useDiscoverUsers,
 } from "~/api/hooks";
 import { StandardErrorBox } from "~/ui/ErrorBox";
 import { ProgressBar } from "~/ui/ProgressBar";
@@ -17,6 +18,12 @@ import { Tab, TabList, TabPanel, Tabs } from "~/ui/Tabs";
 import { UseQueryResult } from "@tanstack/react-query";
 import { DirectChatWindow } from "~/components/DirectChatWindow";
 import { Button } from "~/ui/Button";
+import { Modal } from "~/ui/Modal";
+import { Dialog } from "~/ui/Dialog";
+import { Autocomplete, DialogTrigger, Heading, Text } from "react-aria-components";
+import { SearchField } from "~/ui/SearchField";
+import { Menu } from "~/ui/Menu";
+import { ListBox, ListBoxItem } from "~/ui/ListBox";
 
 export const Route = createFileRoute("/_authenticated/_layout/")({
   component: RouteComponent,
@@ -224,6 +231,46 @@ function GroupsPanel({ setOpen }: { setOpen(value: boolean): void }) {
   )
 }
 
+function DiscoveryDialog() {
+  const { isLoading, error, data } = useDiscoverUsers()
+  const items = data?.data ?? []
+
+  return (
+    <Modal isDismissable>
+      <Dialog>
+        <Heading slot="title" className="text-xl font-bold pb-4">Discover Users</Heading>
+
+        <div className="space-y-4">
+          <Autocomplete>
+            <SearchField aria-label="Search for users" placeholder="Search for users..." />
+            <ListBox items={items} renderEmptyState={() => isLoading ? <ProgressBar
+                label="Loading users..."
+                className="mt-12"
+                isIndeterminate
+              /> : <div className="text-center opacity-80 p-4">Your search returned no results</div>}>
+              {(item) =>
+                <ListBoxItem>
+                  <div className="flex flex-row items-center space-x-4">
+                    <div className="h-8 w-8 rounded-full bg-fuchsia-500 text-white flex items-center justify-center text-sm font-bold">
+                      {item.name[0]}
+                    </div>
+                    <div className="flex flex-col">
+                      <Text slot="label" className="text-lg">{item.name}</Text>
+                      <Text slot="description">{item.email} - {item.major}</Text>
+                    </div>
+                  </div>
+                </ListBoxItem>
+              }
+            </ListBox>
+          </Autocomplete>
+
+          <StandardErrorBox explanation="Failed to search for users" error={error} />
+        </div>
+      </Dialog>
+    </Modal>
+  )
+}
+
 function RouteComponent() {
   const feedPosts = useGetFeedPosts();
   const trendingPosts = useGetTrendingPosts();
@@ -244,6 +291,12 @@ function RouteComponent() {
           <Button variant="secondary" onPress={() => setShowDmPanel(true)}>
             DMs
           </Button>
+          <DialogTrigger>
+            <Button variant="secondary">
+              Discover Users
+            </Button>
+            <DiscoveryDialog />
+          </DialogTrigger>
         </div>
 
         {/* Post composer + tabs */}

@@ -1306,3 +1306,41 @@ export function useUpdateSettings() {
     },
   })
 }
+
+export type DiscoverUsersResponse = {
+  id: string
+  name: string
+  email: string
+  major: string
+  department: string
+  year: string
+  bio: string
+  interests: string[]
+  score: number
+}[]
+
+const discoverUsersResponse = response(array(strictObject({
+  id: string(),
+  name: string(),
+  email: string(),
+  major: string(),
+  department: string(),
+  year: string(),
+  bio: string(),
+  interests: array(string()),
+  score: number(),
+})))
+
+export function useDiscoverUsers() {
+  const auth = useAuthContext()
+
+  return useQuery({
+    queryKey: ['users', 'discover'] as const,
+    queryFn: (): Promise<OkResponse<DiscoverUsersResponse>> => api({
+      endpoint: `/users/discover`,
+      schema: discoverUsersResponse,
+      authContext: auth,
+      method: "GET",
+    }),
+  })
+}
