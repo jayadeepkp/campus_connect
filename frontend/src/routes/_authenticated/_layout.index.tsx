@@ -58,16 +58,7 @@ function PostFeed({ posts }: { posts: UseQueryResult<OkResponse<Post[]>> }) {
   );
 }
 
-function RouteComponent() {
-  const feedPosts = useGetFeedPosts();
-  const trendingPosts = useGetTrendingPosts();
-  const myPosts = useMyPosts();
-
-  // --- Groups & DMs panel visibility ---
-  const [showGroupsPanel, setShowGroupsPanel] = useState(false);
-  const [showDmPanel, setShowDmPanel] = useState(false);
-
-  // --- DM state: which email/thread is open ---
+function DirectMessagesPanel({ setOpen }: { setOpen(value: boolean): void }) {
   const [dmEmailInput, setDmEmailInput] = useState("");
   const [activeDmUserId, setActiveDmUserId] = useState<string | null>(null);
   const [dmError, setDmError] = useState<string | null>(null);
@@ -85,22 +76,21 @@ function RouteComponent() {
     }
   });
 
+  function upsertDmContact(email: string) {
+    setDmContacts((prev) => {
+      // move to top & avoid duplicates
+      const clean = prev.filter((e) => e !== email);
+      const next = [email, ...clean];
 
-function upsertDmContact(email: string) {
-  setDmContacts((prev) => {
-    // move to top & avoid duplicates
-    const clean = prev.filter((e) => e !== email);
-    const next = [email, ...clean];
+      try {
+        window.localStorage.setItem(DM_CONTACTS_KEY, JSON.stringify(next));
+      } catch {
+        // ignore storage errors
+      }
 
-    try {
-      window.localStorage.setItem(DM_CONTACTS_KEY, JSON.stringify(next));
-    } catch {
-      // ignore storage errors
-    }
-
-    return next;
-  });
-}
+      return next;
+    });
+  }
 
   function handleOpenChatByEmail(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -118,6 +108,130 @@ function upsertDmContact(email: string) {
     setActiveDmUserId(trimmed);
     upsertDmContact(trimmed);
   }
+
+  return (
+    <div className="fixed inset-0 z-40 flex justify-end bg-black/60">
+      <div className="h-full w-full max-w-md bg-stone-900 border-l border-stone-700 flex flex-col">
+        {/* header */}
+        <div className="flex items-center justify-between px-4 py-3 border-b border-stone-700">
+          <div>
+            <h2 className="font-semibold">Direct chat</h2>
+            <p className="text-xs opacity-70">
+              Prototype for 1:1 messaging. History is saved in this browser.
+            </p>
+          </div>
+          <button
+            type="button"
+            className="p-1 rounded hover:bg-stone-800"
+            onClick={() => setOpen(false)}
+            aria-label="Close direct messages"
+          >
+            ✕
+          </button>
+        </div>
+
+        {/* recent chats list */}
+        {dmContacts.length > 0 && (
+          <div className="px-4 py-2 border-b border-stone-800 text-sm">
+            <div className="mb-1 font-semibold text-xs opacity-70">
+              Recent chats
+            </div>
+            <div className="flex flex-col gap-1">
+              {dmContacts.map((email) => (
+                <button
+                  key={email}
+                  type="button"
+                  onClick={() => {
+                    setDmEmailInput(email);
+                    setActiveDmUserId(email);
+                    setDmError(null);
+                  }}
+                  className={`text-left px-2 py-1 rounded hover:bg-stone-800 ${
+                    activeDmUserId === email ? "bg-stone-800" : ""
+                  }`}
+                >
+                  {email}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* email → open chat form */}
+        <form
+          onSubmit={handleOpenChatByEmail}
+          className="flex flex-row gap-2 items-center px-4 py-3 border-b border-stone-800"
+        >
+          <input
+            type="email"
+            value={dmEmailInput}
+            onChange={(e) => setDmEmailInput(e.target.value)}
+            placeholder="friend@uky.edu"
+            className="flex-1 px-2 py-1 rounded bg-stone-900 border border-stone-600 text-sm"
+          />
+          <Button type="submit" variant="secondary">
+            Open
+          </Button>
+        </form>
+
+        {dmError && (
+          <div className="mx-4 mt-2 rounded bg-red-900/70 text-xs text-red-100 px-2 py-1">
+            {dmError}
+          </div>
+        )}
+
+        {/* chat body using DirectChatWindow */}
+        <div className="flex-1 overflow-y-auto px-4 py-3">
+          {activeDmUserId ? (
+            <DirectChatWindow otherUserId={activeDmUserId} />
+          ) : (
+            <p className="text-sm opacity-70">
+              Open a conversation above to start chatting.
+            </p>
+          )}
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function GroupsPanel({ setOpen }: { setOpen(value: boolean): void }) {
+  return (
+    <div className="fixed inset-0 z-40 flex justify-end bg-black/60">
+      <div className="h-full w-full max-w-md bg-stone-900 border-l border-stone-700 flex flex-col">
+        <div className="flex items-center justify-between px-4 py-3 border-b border-stone-700">
+          <div>
+            <h2 className="font-semibold">Your groups</h2>
+            <p className="text-xs opacity-70">
+              Groups you&apos;ve created or joined.
+            </p>
+          </div>
+          <button
+            type="button"
+            className="p-1 rounded hover:bg-stone-800"
+            onClick={() => setOpen(false)}
+            aria-label="Close groups"
+          >
+            ✕
+          </button>
+        </div>
+
+        <div className="flex-1 overflow-y-auto px-4 py-3">
+          <MyGroupsList />
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function RouteComponent() {
+  const feedPosts = useGetFeedPosts();
+  const trendingPosts = useGetTrendingPosts();
+  const myPosts = useMyPosts();
+
+  // --- Groups & DMs panel visibility ---
+  const [showGroupsPanel, setShowGroupsPanel] = useState(false);
+  const [showDmPanel, setShowDmPanel] = useState(false);
 
   return (
     <>
@@ -154,118 +268,10 @@ function upsertDmContact(email: string) {
       </div>
 
       {/* --- Groups slide-in panel --- */}
-      {showGroupsPanel && (
-        <div className="fixed inset-0 z-40 flex justify-end bg-black/60">
-          <div className="h-full w-full max-w-md bg-stone-900 border-l border-stone-700 flex flex-col">
-            <div className="flex items-center justify-between px-4 py-3 border-b border-stone-700">
-              <div>
-                <h2 className="font-semibold">Your groups</h2>
-                <p className="text-xs opacity-70">
-                  Groups you&apos;ve created or joined.
-                </p>
-              </div>
-              <button
-                type="button"
-                className="p-1 rounded hover:bg-stone-800"
-                onClick={() => setShowGroupsPanel(false)}
-                aria-label="Close groups"
-              >
-                ✕
-              </button>
-            </div>
-
-            <div className="flex-1 overflow-y-auto px-4 py-3">
-              <MyGroupsList />
-            </div>
-          </div>
-        </div>
-      )}
+      {showGroupsPanel && <GroupsPanel setOpen={setShowGroupsPanel} />}
 
       {/* --- DM slide-in panel --- */}
-      {showDmPanel && (
-        <div className="fixed inset-0 z-40 flex justify-end bg-black/60">
-          <div className="h-full w-full max-w-md bg-stone-900 border-l border-stone-700 flex flex-col">
-            {/* header */}
-            <div className="flex items-center justify-between px-4 py-3 border-b border-stone-700">
-              <div>
-                <h2 className="font-semibold">Direct chat</h2>
-                <p className="text-xs opacity-70">
-                  Prototype for 1:1 messaging. History is saved in this browser.
-                </p>
-              </div>
-              <button
-                type="button"
-                className="p-1 rounded hover:bg-stone-800"
-                onClick={() => setShowDmPanel(false)}
-                aria-label="Close direct messages"
-              >
-                ✕
-              </button>
-            </div>
-
-            {/* recent chats list */}
-            {dmContacts.length > 0 && (
-              <div className="px-4 py-2 border-b border-stone-800 text-sm">
-                <div className="mb-1 font-semibold text-xs opacity-70">
-                  Recent chats
-                </div>
-                <div className="flex flex-col gap-1">
-                  {dmContacts.map((email) => (
-                    <button
-                      key={email}
-                      type="button"
-                      onClick={() => {
-                        setDmEmailInput(email);
-                        setActiveDmUserId(email);
-                        setDmError(null);
-                      }}
-                      className={`text-left px-2 py-1 rounded hover:bg-stone-800 ${
-                        activeDmUserId === email ? "bg-stone-800" : ""
-                      }`}
-                    >
-                      {email}
-                    </button>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {/* email → open chat form */}
-            <form
-              onSubmit={handleOpenChatByEmail}
-              className="flex flex-row gap-2 items-center px-4 py-3 border-b border-stone-800"
-            >
-              <input
-                type="email"
-                value={dmEmailInput}
-                onChange={(e) => setDmEmailInput(e.target.value)}
-                placeholder="friend@uky.edu"
-                className="flex-1 px-2 py-1 rounded bg-stone-900 border border-stone-600 text-sm"
-              />
-              <Button type="submit" variant="secondary">
-                Open
-              </Button>
-            </form>
-
-            {dmError && (
-              <div className="mx-4 mt-2 rounded bg-red-900/70 text-xs text-red-100 px-2 py-1">
-                {dmError}
-              </div>
-            )}
-
-            {/* chat body using DirectChatWindow */}
-            <div className="flex-1 overflow-y-auto px-4 py-3">
-              {activeDmUserId ? (
-                <DirectChatWindow otherUserId={activeDmUserId} />
-              ) : (
-                <p className="text-sm opacity-70">
-                  Open a conversation above to start chatting.
-                </p>
-              )}
-            </div>
-          </div>
-        </div>
-      )}
+      {showDmPanel && <DirectMessagesPanel setOpen={setShowDmPanel} />}
     </>
   );
 }
