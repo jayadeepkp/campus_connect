@@ -849,6 +849,12 @@ const groupMember = strictObject({
   email: string(),
 })
 
+// createdBy / members can be either a string id or a populated GroupMember
+const groupMemberRef = union([
+  string(),
+  groupMember,
+])
+
 export type Group = {
   _id: string
   name: string
@@ -1021,9 +1027,9 @@ export type AddGroupMemberRequest = {
   email: string
 }
 
-export type AddGroupMemberResponse = Group
+export type AddGroupMemberResponse = GroupDetails
 
-const addGroupMemberResponse = response(group)
+const addGroupMemberResponse = response(groupDetails)
 
 export function useAddGroupMember() {
   const auth = useAuthContext()
