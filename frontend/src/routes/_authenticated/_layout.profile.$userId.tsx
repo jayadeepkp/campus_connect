@@ -1,6 +1,9 @@
 import { createFileRoute } from '@tanstack/react-router'
+import { useContext } from 'react';
 import { useGetPublicProfile } from '~/api/hooks';
+import { Button } from '~/ui/Button';
 import { StandardErrorBox } from '~/ui/ErrorBox';
+import { DirectMessagesControl } from './_layout';
 
 export const Route = createFileRoute('/_authenticated/_layout/profile/$userId')(
   {
@@ -24,6 +27,7 @@ function RouteComponent() {
   const id = Route.useParams().userId
   const profile = useGetPublicProfile(id)
   const profileData = profile.data?.data
+  const control = useContext(DirectMessagesControl)
 
   if (profile.isLoading) {
     return <p className="mt-8">Loading your profile…</p>;
@@ -40,14 +44,19 @@ function RouteComponent() {
   return (
     <div className="max-w-3xl mx-auto py-8 px-4 space-y-6">
       {/* Header */}
-      <div className="flex items-center space-x-4">
-        <div className="h-16 w-16 rounded-full bg-fuchsia-500 text-white flex items-center justify-center text-2xl font-bold">
-          {profileData.name[0]}
+      <div className="flex flex-row space-x-4 items-center justify-between">
+        <div className='flex flex-row space-x-4 items-center'>
+          <div className="h-16 w-16 rounded-full bg-fuchsia-500 text-white flex items-center justify-center text-2xl font-bold">
+            {profileData.name[0]}
+          </div>
+          <div>
+            <h1 className="text-2xl font-bold">{profileData.name}</h1>
+            <p className="text-sm opacity-70">{profileData.email}</p>
+          </div>
         </div>
-        <div>
-          <h1 className="text-2xl font-bold">{profileData.name}</h1>
-          <p className="text-sm opacity-70">{profileData.email}</p>
-        </div>
+        <Button variant='primary' onPress={() => control.setTargetEmail(profileData.email)}>
+          Start DM
+        </Button>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-center">

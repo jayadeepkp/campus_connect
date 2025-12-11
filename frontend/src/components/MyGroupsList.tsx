@@ -42,7 +42,7 @@ export function MyGroupsList() {
   }
 
   return (
-    <div className="mt-8">
+    <div className="min-w-lg">
       <h3 className="text-lg font-semibold mb-2">Your groups</h3>
       <ul className="space-y-2">
         {myGroups.data.data.map((g) => {
