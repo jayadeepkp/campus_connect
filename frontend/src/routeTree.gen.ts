@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as UnauthenticatedRouteImport } from './routes/_unauthenticated'
 import { Route as AuthenticatedRouteImport } from './routes/_authenticated'
 import { Route as UnauthenticatedRegisterRouteImport } from './routes/_unauthenticated/register'
+import { Route as AuthenticatedBlockedRouteImport } from './routes/_authenticated/blocked'
 import { Route as AuthenticatedLayoutRouteImport } from './routes/_authenticated/_layout'
 import { Route as UnauthenticatedRecoveryRouteRouteImport } from './routes/_unauthenticated/recovery.route'
 import { Route as UnauthenticatedLoginRouteRouteImport } from './routes/_unauthenticated/login.route'
@@ -35,6 +36,11 @@ const UnauthenticatedRegisterRoute = UnauthenticatedRegisterRouteImport.update({
   id: '/register',
   path: '/register',
   getParentRoute: () => UnauthenticatedRoute,
+} as any)
+const AuthenticatedBlockedRoute = AuthenticatedBlockedRouteImport.update({
+  id: '/blocked',
+  path: '/blocked',
+  getParentRoute: () => AuthenticatedRoute,
 } as any)
 const AuthenticatedLayoutRoute = AuthenticatedLayoutRouteImport.update({
   id: '/_layout',
@@ -98,6 +104,7 @@ const AuthenticatedLayoutGroupsGroupIdRoute =
 export interface FileRoutesByFullPath {
   '/login': typeof UnauthenticatedLoginRouteRouteWithChildren
   '/recovery': typeof UnauthenticatedRecoveryRouteRouteWithChildren
+  '/blocked': typeof AuthenticatedBlockedRoute
   '/register': typeof UnauthenticatedRegisterRoute
   '/profile': typeof AuthenticatedLayoutProfileRoute
   '/login/email': typeof UnauthenticatedLoginEmailRoute
@@ -108,6 +115,7 @@ export interface FileRoutesByFullPath {
   '/groups/$groupId': typeof AuthenticatedLayoutGroupsGroupIdRoute
 }
 export interface FileRoutesByTo {
+  '/blocked': typeof AuthenticatedBlockedRoute
   '/register': typeof UnauthenticatedRegisterRoute
   '/profile': typeof AuthenticatedLayoutProfileRoute
   '/login/email': typeof UnauthenticatedLoginEmailRoute
@@ -124,6 +132,7 @@ export interface FileRoutesById {
   '/_unauthenticated/login': typeof UnauthenticatedLoginRouteRouteWithChildren
   '/_unauthenticated/recovery': typeof UnauthenticatedRecoveryRouteRouteWithChildren
   '/_authenticated/_layout': typeof AuthenticatedLayoutRouteWithChildren
+  '/_authenticated/blocked': typeof AuthenticatedBlockedRoute
   '/_unauthenticated/register': typeof UnauthenticatedRegisterRoute
   '/_authenticated/_layout/profile': typeof AuthenticatedLayoutProfileRoute
   '/_unauthenticated/login/email': typeof UnauthenticatedLoginEmailRoute
@@ -138,6 +147,7 @@ export interface FileRouteTypes {
   fullPaths:
     | '/login'
     | '/recovery'
+    | '/blocked'
     | '/register'
     | '/profile'
     | '/login/email'
@@ -148,6 +158,7 @@ export interface FileRouteTypes {
     | '/groups/$groupId'
   fileRoutesByTo: FileRoutesByTo
   to:
+    | '/blocked'
     | '/register'
     | '/profile'
     | '/login/email'
@@ -163,6 +174,7 @@ export interface FileRouteTypes {
     | '/_unauthenticated/login'
     | '/_unauthenticated/recovery'
     | '/_authenticated/_layout'
+    | '/_authenticated/blocked'
     | '/_unauthenticated/register'
     | '/_authenticated/_layout/profile'
     | '/_unauthenticated/login/email'
@@ -200,6 +212,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/register'
       preLoaderRoute: typeof UnauthenticatedRegisterRouteImport
       parentRoute: typeof UnauthenticatedRoute
+    }
+    '/_authenticated/blocked': {
+      id: '/_authenticated/blocked'
+      path: '/blocked'
+      fullPath: '/blocked'
+      preLoaderRoute: typeof AuthenticatedBlockedRouteImport
+      parentRoute: typeof AuthenticatedRoute
     }
     '/_authenticated/_layout': {
       id: '/_authenticated/_layout'
@@ -291,10 +310,12 @@ const AuthenticatedLayoutRouteWithChildren =
 
 interface AuthenticatedRouteChildren {
   AuthenticatedLayoutRoute: typeof AuthenticatedLayoutRouteWithChildren
+  AuthenticatedBlockedRoute: typeof AuthenticatedBlockedRoute
 }
 
 const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
   AuthenticatedLayoutRoute: AuthenticatedLayoutRouteWithChildren,
+  AuthenticatedBlockedRoute: AuthenticatedBlockedRoute,
 }
 
 const AuthenticatedRouteWithChildren = AuthenticatedRoute._addFileChildren(

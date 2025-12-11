@@ -5,3 +5,4 @@ server/.env
 server/.env.*
 *~
 frontend/src/routeTree.gen.ts
+frontend/src/routeTree.gen.ts
