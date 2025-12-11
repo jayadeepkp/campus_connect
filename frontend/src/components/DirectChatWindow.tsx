@@ -46,8 +46,6 @@ export function DirectChatWindow({ otherUserEmail }: DirectChatWindowProps) {
   const [input, setInput] = useState("");
   const [error, setError] = useState<string | null>(null);
 
-  const bottomRef = useRef<HTMLDivElement | null>(null);
-
   // 1) Resolve email → Mongo _id on mount / when email changes
   useEffect(() => {
     let cancelled = false;
@@ -102,13 +100,6 @@ export function DirectChatWindow({ otherUserEmail }: DirectChatWindowProps) {
   } = useGetDirectMessages(otherUserId ?? "");
 
   const messages = historyData?.data ?? [];
-
-  // scroll to bottom whenever messages change
-  useEffect(() => {
-    if (bottomRef.current) {
-      bottomRef.current.scrollIntoView({ behavior: "smooth" });
-    }
-  }, [messages.length]);
 
   // 3) Send messages via backend
   const sendMutation = useSendDirectMessage();
@@ -180,7 +171,6 @@ export function DirectChatWindow({ otherUserEmail }: DirectChatWindowProps) {
             );
           })
         )}
-        <div ref={bottomRef} />
       </div>
 
       {(error || sendMutation.isError) && (
