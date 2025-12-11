@@ -232,7 +232,8 @@ function GroupsPanel({ setOpen }: { setOpen(value: boolean): void }) {
 }
 
 function DiscoveryDialog() {
-  const { isLoading, error, data } = useDiscoverUsers()
+  const [str, setStr] = useState("")
+  const { isLoading, error, data } = useDiscoverUsers(str)
   const items = data?.data ?? []
 
   return (
@@ -242,7 +243,7 @@ function DiscoveryDialog() {
 
         <div className="space-y-4">
           <Autocomplete>
-            <SearchField aria-label="Search for users" placeholder="Search for users..." />
+            <SearchField aria-label="Search for users" placeholder="Search for users..." value={str} onChange={setStr} />
             <ListBox items={items} renderEmptyState={() => isLoading ? <ProgressBar
                 label="Loading users..."
                 className="mt-12"

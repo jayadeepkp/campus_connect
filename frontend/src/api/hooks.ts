@@ -1412,13 +1412,13 @@ const discoverUsersResponse = response(array(strictObject({
   score: number(),
 })))
 
-export function useDiscoverUsers() {
+export function useDiscoverUsers(q: string) {
   const auth = useAuthContext()
 
   return useQuery({
-    queryKey: ['users', 'discover'] as const,
+    queryKey: ['users', 'discover', q] as const,
     queryFn: (): Promise<OkResponse<DiscoverUsersResponse>> => api({
-      endpoint: `/users/discover`,
+      endpoint: `/users/discover?q=${encodeURIComponent(q)}`,
       schema: discoverUsersResponse,
       authContext: auth,
       method: "GET",
