@@ -190,7 +190,7 @@ function DirectMessagesPanel({ setOpen }: { setOpen(value: boolean): void }) {
         {/* chat body using DirectChatWindow */}
         <div className="flex-1 overflow-y-auto px-4 py-3">
           {activeDmUserId ? (
-            <DirectChatWindow otherUserId={activeDmUserId} />
+            <DirectChatWindow otherUserEmail={activeDmUserId} />
           ) : (
             <p className="text-sm opacity-70">
               Open a conversation above to start chatting.

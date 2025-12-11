@@ -1121,6 +1121,80 @@ export function useCreateGroupMessage() {
   })
 }
 
+// --- Direct Messages ---
+
+export type DirectMessage = {
+  _id: string
+  from: string         // user id (ObjectId as string)
+  to: string           // user id (ObjectId as string)
+  content: string
+  createdAt: Date
+  updatedAt: Date
+}
+
+const directMessage = strictObject({
+  _id: string(),
+  from: string(),
+  to: string(),
+  content: string(),
+  createdAt: parseDate,
+  updatedAt: parseDate,
+})
+
+export type GetDirectMessagesResponse = DirectMessage[]
+
+const getDirectMessagesResponse = response(array(directMessage))
+
+// Load conversation between me and otherUserId
+export function useGetDirectMessages(otherUserId: string) {
+  const auth = useAuthContext()
+
+  return useQuery({
+    queryKey: ['directMessages', otherUserId] as const,
+    queryFn: (): Promise<OkResponse<GetDirectMessagesResponse>> =>
+      api({
+        endpoint: `/direct-messages/history`,
+        schema: getDirectMessagesResponse,
+        authContext: auth,
+        method: "POST",
+        body: { otherUserId },
+      }),
+    enabled: !!otherUserId,
+    // simple "realtime" via polling every 3 seconds
+    refetchInterval: 3000,
+  })
+}
+
+export type SendDirectMessageRequest = {
+  otherUserId: string
+  content: string
+}
+
+export type SendDirectMessageResponse = DirectMessage
+
+const sendDirectMessageResponse = response(directMessage)
+
+export function useSendDirectMessage() {
+  const auth = useAuthContext()
+
+  return useMutation({
+    mutationFn: (data: SendDirectMessageRequest): Promise<OkResponse<SendDirectMessageResponse>> =>
+      api({
+        endpoint: `/direct-messages/send`,
+        schema: sendDirectMessageResponse,
+        authContext: auth,
+        method: "POST",
+        body: data,
+      }),
+    onSuccess(_data, variables, _result, context) {
+      // refresh that thread after sending
+      context.client.invalidateQueries({
+        queryKey: ['directMessages', variables.otherUserId],
+      })
+    },
+  })
+}
+
 export type Profile = {
   id: string
   name: string

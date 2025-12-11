@@ -5,127 +5,175 @@ import React, {
   useState,
   type FormEvent,
 } from "react";
-import { useAuthContext } from "~/api/hooks";
+import {
+  useAuthContext,
+  useGetDirectMessages,
+  useSendDirectMessage,
+} from "~/api/hooks";
 
-type DirectMessage = {
-  id: string;
-  from: string;      // sender email (lowercased)
-  content: string;
-  createdAt: string;
-};
+const API_BASE = import.meta.env.VITE_API_BASE ?? "http://localhost:5050";
+const API_URL = `${API_BASE}/api`;
 
-type Status = "idle" | "sending";
-
-/** Stable localStorage key for a 1:1 thread, independent of order. */
-function getThreadKey(a: string, b: string): string {
-  const [x, y] = [a.toLowerCase(), b.toLowerCase()].sort();
-  return `dm:${x}:${y}`;
-}
+type Status = "idle" | "loading" | "sending";
 
 interface DirectChatWindowProps {
   /**
-   * OTHER user’s email address (e.g., "hp@uky.edu").
-   * The current user comes from the auth context.
+   * OTHER user’s EMAIL address (e.g., "second.user@uky.edu").
+   * We will resolve this to a MongoDB _id via the backend.
    */
-  otherUserId: string;
+  otherUserEmail: string;
 }
 
-export function DirectChatWindow({ otherUserId }: DirectChatWindowProps) {
+export function DirectChatWindow({ otherUserEmail }: DirectChatWindowProps) {
   const auth = useAuthContext();
 
-  // current logged-in user’s email
-  const myEmail = auth.user!.user.email.toLowerCase();
-  const otherEmail = otherUserId.toLowerCase();
+  if (!auth.user) {
+    return (
+      <div className="p-2 text-sm text-red-300">
+        You must be logged in to use direct messages.
+      </div>
+    );
+  }
 
-  const storageKey = getThreadKey(myEmail, otherEmail);
+  const myUserId = auth.user.user.id;
+  const myEmail = auth.user.user.email;
 
-  const [messages, setMessages] = useState<DirectMessage[]>([]);
-  const [input, setInput] = useState("");
+  // Debug: see what we got from parent
+  console.log("DirectChatWindow props:", { otherUserEmail, myUserId, myEmail });
+
+  const [otherUserId, setOtherUserId] = useState<string | null>(null);
   const [status, setStatus] = useState<Status>("idle");
+  const [input, setInput] = useState("");
   const [error, setError] = useState<string | null>(null);
 
   const bottomRef = useRef<HTMLDivElement | null>(null);
 
-  // Scroll to bottom whenever messages change
+  // 1) Resolve email → Mongo _id on mount / when email changes
+  useEffect(() => {
+    let cancelled = false;
+
+    async function resolveUser() {
+      try {
+        setStatus("loading");
+        setError(null);
+
+        const res = await fetch(`${API_URL}/direct-messages/resolve-user`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${auth.user!.token}`,
+          },
+          body: JSON.stringify({ email: otherUserEmail }),
+        });
+
+        const json = await res.json();
+        if (!json.ok) {
+          if (!cancelled) {
+            setError(json.error || "Unable to find that user.");
+            setStatus("idle");
+          }
+          return;
+        }
+
+        if (!cancelled) {
+          setOtherUserId(json.data.userId);
+          setStatus("idle");
+        }
+      } catch (err) {
+        console.error("resolve-user error:", err);
+        if (!cancelled) {
+          setError("Failed to resolve user by email.");
+          setStatus("idle");
+        }
+      }
+    }
+
+    resolveUser();
+    return () => {
+      cancelled = true;
+    };
+  }, [otherUserEmail, auth.user]);
+
+  // 2) Load conversation from backend (polling every 3s for "realtime")
+  const {
+    data: historyData,
+    isLoading: historyLoading,
+    error: historyError,
+  } = useGetDirectMessages(otherUserId ?? "");
+
+  const messages = historyData?.data ?? [];
+
+  // scroll to bottom whenever messages change
   useEffect(() => {
     if (bottomRef.current) {
       bottomRef.current.scrollIntoView({ behavior: "smooth" });
     }
   }, [messages.length]);
 
-  // Load history from localStorage whenever the participants change
-  useEffect(() => {
-    try {
-      const raw = window.localStorage.getItem(storageKey);
-      if (!raw) {
-        setMessages([]);
-        return;
-      }
-      const parsed = JSON.parse(raw) as DirectMessage[];
-      setMessages(Array.isArray(parsed) ? parsed : []);
-    } catch (e) {
-      console.error("Failed to load DM history", e);
-      setMessages([]);
-    }
-  }, [storageKey]);
-
-  function persist(newMessages: DirectMessage[]) {
-    setMessages(newMessages);
-    try {
-      window.localStorage.setItem(storageKey, JSON.stringify(newMessages));
-    } catch (e) {
-      console.error("Failed to save DM history", e);
-    }
-  }
+  // 3) Send messages via backend
+  const sendMutation = useSendDirectMessage();
 
   function handleSend(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
     const trimmed = input.trim();
-    if (!trimmed) return;
+    if (!trimmed || !otherUserId) return;
 
     setStatus("sending");
     setError(null);
 
-    try {
-      const now = new Date().toISOString();
-      const newMessage: DirectMessage = {
-        id: `${now}-${Math.random().toString(36).slice(2)}`,
-        from: myEmail,         // **always the sender’s email**
+    sendMutation.mutate(
+      {
+        otherUserId,
         content: trimmed,
-        createdAt: now,
-      };
-
-      const next = [...messages, newMessage];
-      persist(next);
-      setInput("");
-      setStatus("idle");
-    } catch (err) {
-      console.error(err);
-      setStatus("idle");
-      setError("Something went wrong while sending your message.");
-    }
+      },
+      {
+        onSuccess() {
+          setInput("");
+          setStatus("idle");
+          // list auto refreshes via invalidateQueries inside the hook
+        },
+        onError(err: any) {
+          console.error("send DM error:", err);
+          setStatus("idle");
+          setError("Something went wrong while sending your message.");
+        },
+      }
+    );
   }
+
+  const loading = status === "loading" || historyLoading;
 
   return (
     <div className="flex flex-col h-full">
+      {/* tiny debug line */}
+      <div className="text-[10px] text-stone-500 mb-1">
+        DEBUG email = {otherUserEmail}, id = {otherUserId ?? "resolving…"}
+      </div>
+
       {/* History */}
       <div className="flex-1 overflow-y-auto space-y-2 text-sm pr-1">
-        {messages.length === 0 ? (
+        {loading ? (
+          <div className="opacity-70">Loading conversation…</div>
+        ) : historyError ? (
+          <div className="text-red-300 text-xs">
+            Failed to load messages.
+          </div>
+        ) : messages.length === 0 ? (
           <div className="opacity-70">
             No messages yet. Say hi to start the conversation!
           </div>
         ) : (
           messages.map((m) => {
-            const isMine = m.from.toLowerCase() === myEmail;
+            const isMine = m.from === myUserId;
             return (
               <div
-                key={m.id}
+                key={m._id}
                 className={`px-2 py-1 rounded border border-stone-700 bg-stone-900/60 max-w-[80%] ${
                   isMine ? "ml-auto text-right" : "mr-auto text-left"
                 }`}
               >
                 <div className="opacity-60 text-[0.65rem] mb-0.5">
-                  {isMine ? "You" : otherEmail} ·{" "}
+                  {isMine ? "You" : otherUserEmail} ·{" "}
                   {new Date(m.createdAt).toLocaleTimeString()}
                 </div>
                 <div>{m.content}</div>
@@ -136,9 +184,9 @@ export function DirectChatWindow({ otherUserId }: DirectChatWindowProps) {
         <div ref={bottomRef} />
       </div>
 
-      {error && (
+      {(error || sendMutation.isError) && (
         <div className="mt-2 rounded bg-red-900/70 text-xs text-red-100 px-2 py-1">
-          {error}
+          {error || "Something went wrong."}
         </div>
       )}
 
@@ -151,13 +199,18 @@ export function DirectChatWindow({ otherUserId }: DirectChatWindowProps) {
           type="text"
           value={input}
           onChange={(e) => setInput(e.target.value)}
-          placeholder="Type a message…"
+          placeholder={
+            otherUserId
+              ? "Type a message…"
+              : "Resolving user, please wait…"
+          }
           className="flex-1 px-2 py-1 rounded bg-stone-900 border border-stone-600 text-sm"
+          disabled={!otherUserId || status === "sending"}
         />
         <button
           type="submit"
           className="px-3 py-1 rounded bg-fuchsia-600 text-sm font-semibold disabled:opacity-60"
-          disabled={status === "sending"}
+          disabled={!otherUserId || status === "sending"}
         >
           {status === "sending" ? "Sending…" : "Send"}
         </button>
