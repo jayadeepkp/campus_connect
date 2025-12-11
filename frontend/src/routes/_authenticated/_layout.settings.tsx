@@ -12,7 +12,7 @@ import { DialogTrigger, Heading } from "react-aria-components"
 import { Modal } from "~/ui/Modal"
 import { Dialog } from "~/ui/Dialog"
 
-export const Route = createFileRoute("/_authenticated/_layout/profile")({
+export const Route = createFileRoute("/_authenticated/_layout/settings")({
   component: ProfilePage,
   loader: () => ({
     title: 'Profile'

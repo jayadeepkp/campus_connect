@@ -1461,3 +1461,41 @@ export function useDeleteAccount() {
     },
   })
 }
+
+export type GetPublicProfileResponse = {
+  id: string
+  name: string
+  email: string
+  major: string
+  department: string
+  year: string
+  bio: string
+  interests: string[]
+  createdAt: Date
+}
+
+const getPublicProfileResponse = response(strictObject({
+  id: string(),
+  name: string(),
+  email: string(),
+  major: string(),
+  department: string(),
+  year: string(),
+  bio: string(),
+  interests: array(string()),
+  createdAt: parseDate,
+}))
+
+export function useGetPublicProfile(id: string) {
+  const auth = useAuthContext()
+
+  return useQuery({
+    queryKey: ['users', 'one', id] as const,
+    queryFn: ({ queryKey }): Promise<OkResponse<GetPublicProfileResponse>> => api({
+      endpoint: `/users/${queryKey[2]}/public`,
+      schema: getPublicProfileResponse,
+      authContext: auth,
+      method: "GET",
+    }),
+  })
+}

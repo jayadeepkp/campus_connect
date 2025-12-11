@@ -3,7 +3,7 @@ import type { FormEvent } from "react";
 import CreatePostForm from "~/components/CreatePostForm";
 import PostCard from "~/components/PostCard";
 import { MyGroupsList } from "~/components/MyGroupsList";
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import {
   useGetFeedPosts,
   OkResponse,
@@ -22,7 +22,6 @@ import { Modal } from "~/ui/Modal";
 import { Dialog } from "~/ui/Dialog";
 import { Autocomplete, DialogTrigger, Heading, Text } from "react-aria-components";
 import { SearchField } from "~/ui/SearchField";
-import { Menu } from "~/ui/Menu";
 import { ListBox, ListBoxItem } from "~/ui/ListBox";
 
 export const Route = createFileRoute("/_authenticated/_layout/")({
@@ -235,6 +234,7 @@ function DiscoveryDialog() {
   const [str, setStr] = useState("")
   const { isLoading, error, data } = useDiscoverUsers(str)
   const items = data?.data ?? []
+  const navigate = useNavigate()
 
   return (
     <Modal isDismissable>
@@ -250,7 +250,7 @@ function DiscoveryDialog() {
                 isIndeterminate
               /> : <div className="text-center opacity-80 p-4">Your search returned no results</div>}>
               {(item) =>
-                <ListBoxItem>
+                <ListBoxItem key={item.id} onAction={() => navigate({ to: '/profile/$userId', params: { userId: item.id } })}>
                   <div className="flex flex-row items-center space-x-4">
                     <div className="h-8 w-8 rounded-full bg-fuchsia-500 text-white flex items-center justify-center text-sm font-bold">
                       {item.name[0]}

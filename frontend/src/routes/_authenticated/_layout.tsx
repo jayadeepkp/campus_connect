@@ -118,7 +118,7 @@ function RouteComponent() {
               </div>
             </Button>
             <Menu>
-              <MenuLink to="/profile">Profile</MenuLink>
+              <MenuLink to="/settings">Profile</MenuLink>
               <MenuItem onAction={() => setCreateGroupOpen(true)}>Create Group</MenuItem>
               <MenuItem onAction={() => logout.mutate()}>Log Out</MenuItem>
             </Menu>
